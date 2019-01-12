@@ -5,9 +5,7 @@
 
 #include <frc/smartdashboard/SmartDashboard.h>
 
-void Robot::RobotInit() {
-  
-}
+void Robot::RobotInit() {}
 
 void Robot::RobotPeriodic() {}
 
