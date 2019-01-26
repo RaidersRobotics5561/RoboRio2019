@@ -40,11 +40,12 @@ extern double      V_HookPositionErrorIntegral;
 extern double      V_HookLiftHeightDesired;
 extern double      V_HookPID_Gain[E_PID_Sz];
 
-extern double      V_IntakeLiftHeightDesired;
-extern double      V_IntakePositionPrev;
-extern double      V_IntakePosition;
-extern double      V_IntakePositionErrorPrev;
-extern double      V_IntakePositionErrorIntegral;
+extern double      V_LiftHeightDesired[C_DirectionSz];
+extern double      V_LiftPositionPrev[C_DirectionSz];
+extern double      V_LiftPositionPrev[C_DirectionSz];
+extern double      V_LiftPosition[C_DirectionSz];
+extern double      V_LiftPositionErrorPrev[C_DirectionSz];
+extern double      V_LiftPositionErrorIntegral[C_DirectionSz];
 
 extern double      V_GyroAngleRelative;
 extern double      V_GyroAngleOffset;

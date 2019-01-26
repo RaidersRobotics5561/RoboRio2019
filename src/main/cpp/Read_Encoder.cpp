@@ -20,8 +20,8 @@ double V_UltraSonicDistancePrev[E_RobotSideSz];
  ******************************************************************************/
 void Read_Sensors(TalonSRX  *L_DriveMortorCtrlLeft,
                   TalonSRX  *L_DriveMortorCtrlRight,
-                  TalonSRX  *L_Intake,
-                  TalonSRX  *L_Hook,
+                  TalonSRX  *L_LiftFront,
+                  TalonSRX  *L_LiftBack,
                   Counter   *L_ArmEncoder,
                   ADXRS450_Gyro *L_Gyro,
                   double    *L_ArmAngleDeg,
@@ -30,6 +30,7 @@ void Read_Sensors(TalonSRX  *L_DriveMortorCtrlLeft,
                   Ultrasonic *L_UltraSonicSensorLeft,
                   Ultrasonic *L_UltraSonicSensorRight)
   {
+    T_Direction L_Index;
   T_RobotSide L_RobotSide;
   double      L_ArmEncoderCount = 0.0;
   double      L_ArmAngle;
@@ -93,10 +94,14 @@ void Read_Sensors(TalonSRX  *L_DriveMortorCtrlLeft,
 
   /* Great, let's finally figure out the intake vertical position: */
   /* Next, convert the revolutions to hook distance traveled: */
-  V_IntakePosition = LagFilter(K_IntakeLiftLagFilter,
-                               (fabs(L_Intake->GetSelectedSensorPosition(K_PIDLoopIdx) * K_IntakePulseToTravel)),
-                               V_IntakePositionPrev);
 
+    V_LiftPosition[C_Front] = LagFilter(K_LiftLagFilter,
+                               (fabs(L_LiftFront->GetSelectedSensorPosition(K_PIDLoopIdx) * K_LiftPulseToTravel)),
+                               V_LiftPositionPrev[C_Front]);
+
+      V_LiftPosition[C_Back] = LagFilter(K_LiftLagFilter,
+                               (fabs(L_LiftBack->GetSelectedSensorPosition(K_PIDLoopIdx) * K_LiftPulseToTravel)),
+                               V_LiftPositionPrev[C_Back]);
   L_UltraDistance = L_UltraSonicSensorLeft->GetRangeInches();
 
   if (L_UltraDistance > K_UltraMaxDistance)

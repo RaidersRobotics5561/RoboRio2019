@@ -38,14 +38,19 @@ double V_HookPositionErrorIntegral;
 double V_HookLiftHeightDesired;
 double V_HookPID_Gain[E_PID_Sz];
 
-double V_IntakePosition;
-double V_IntakePositionErrorPrev;
-double V_IntakePositionErrorIntegral;
-double V_IntakeLiftHeightDesired;
-double V_IntakePID_Gain[E_PID_Sz];
-double V_IntakePositionPrev;
+double V_IntakePosition[C_DirectionSz];
+double V_IntakePositionErrorPrev[C_DirectionSz];
+double V_IntakePositionErrorIntegral[C_DirectionSz];
+double V_IntakeLiftHeightDesired[C_DirectionSz];
+double V_IntakePID_Gain[C_DirectionSz][E_PID_Sz];
+double V_IntakePositionPrev[C_DirectionSz];
 
-double V_IntakeArmPulseToRev[E_ArmCmndSz];
+double V_LiftPosition;
+double V_LiftPositionErrorPrev;
+double V_LiftPositionErrorIntegral;
+double V_LiftLiftHeightDesired;
+double V_LiftPID_Gain[E_PID_Sz];
+double V_LiftPositionPrev;
 
 double V_WheelRPM_Filt[E_RobotSideSz];
 double V_WheelRPM_FiltPrev[E_RobotSideSz];
@@ -105,9 +110,9 @@ private:
 	TalonSRX * _talon2 = new TalonSRX(3);
 	//right Back, SRX:Right Right #4
 	TalonSRX * _talon3 = new TalonSRX(4);
-	//Intake #5
+	//Front Lift
 	TalonSRX * _talon4 = new TalonSRX(5);
-	//Hook delivery #6
+	//Back Lift
 	TalonSRX * _talon5 = new TalonSRX(6);
 	// Left articulation
 	Spark *Spark1 = new Spark(0);

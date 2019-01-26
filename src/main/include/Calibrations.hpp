@@ -29,18 +29,18 @@ const double K_IntakeArmPulseToRev[E_ArmCmndSz] =
         0.00557103064066852367688022284123,  //   E_ArmCmndUp
         0.00557103064066852367688022284123}; //   E_ArmCmndDwn
 
-/* K_IntakePulseToTravel: Conversion constant of the number of pulses to the height of the intake lift position
+/* K_LiftPulseToTravel: Conversion constant of the number of pulses to the height of the intake lift position
                           (inches / pulse) */
-const double K_IntakePulseToTravel = -0.002693208430913349;
+const double K_LiftPulseToTravel = -0.002693208430913349;
 
 /* K_MaxIntakeLiftHeight: Maximum height of the intake lift mechanism.  This will limit the height of the intake.
                           This should be calibrated to be just under the mechanical height limit.  If calibrated higher,
                           there is a risk of brown outs.  (inches) */
 const double K_MaxIntakeLiftHeight = 52;
 
-/* K_IntakeLiftLagFilter: Simple first order lag filter associated with the intake lift position.  Used to help filter
+/* K_LiftLagFilter: Simple first order lag filter associated with the intake lift position.  Used to help filter
                           out noise in the measured position. Range of 0 - 1. (unitless) */
-const double K_IntakeLiftLagFilter = 0.8;
+const double K_LiftLagFilter = 0.8;
 
 /* K_Intake_PID_Gain: PID gains for the intake lift mechanism. Should range from 0 -1 (but typically << 1). */
 const double K_Intake_PID_Gain[E_PID_Sz] =

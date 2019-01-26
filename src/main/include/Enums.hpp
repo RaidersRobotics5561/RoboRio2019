@@ -7,6 +7,13 @@
 #ifndef SRC_ROBORIO2018_ENUMS_HPP_
 #define SRC_ROBORIO2018_ENUMS_HPP_
 
+typedef enum T_Direction
+ {
+   C_Forward,
+   C_Backward,
+   C_DirectionSz
+ }T_Direction;
+
  typedef enum Blinker
  {
    C_BlinkR,
