@@ -7,6 +7,8 @@
 
 #include "Robot.h"
 
+#include <frc/Driverstation.h>
+
 using namespace frc;
 
 void Robot::RobotInit() {
@@ -74,7 +76,9 @@ void Robot::RobotPeriodic() {
     DesiredPos_Backward = 0;
     DesiredPos_Forward = 0;
 
+
     while(IsEnabled() && IsOperatorControl()){
+    
       if(IsAuton){
           AutonDriveLiftWheel(_spark1);
       } else {
@@ -193,6 +197,12 @@ void Robot::RobotPeriodic() {
       if(_joy1->GetRawButton(8))
       {
         IsAuton = true;
+      }
+
+      if(DriverStation::GetInstance().IsBrownedOut())
+      {
+        _talon5->Set(ControlMode::PercentOutput, 0);
+        _talon6->Set(ControlMode::PercentOutput, 0);
       }
 
       Wait(C_ExeTime);
