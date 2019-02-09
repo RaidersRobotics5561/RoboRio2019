@@ -15,6 +15,6 @@ using namespace frc;
 const double C_ExeTime = 0.01;
 
 const int K_TimeoutMs = 10;
-const int K_WheelPulseToRev = 4100;
+const double K_WheelPulseToRev = 12.75;
 
 

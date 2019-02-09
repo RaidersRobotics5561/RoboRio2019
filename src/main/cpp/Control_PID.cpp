@@ -2,6 +2,13 @@
 #include "enums.h"
 #include "Calibrations.hpp"
 #include "LookUp.hpp"
+#include "const.h"
+
+double K_LukeStopperRamp = 40;
+double K_LukeStopperRampLow = 25;
+double K_LukeStopperThreashold = 75;
+
+double K_LukeStopperMaxDelta = 40; 
 
 double Control_PID(double  L_DesiredSpeed,
                    double  L_CurrentSpeed,
@@ -82,11 +89,68 @@ double Control_PID(double  L_DesiredSpeed,
   return L_OutputCmnd;
 }
 
+double LukeStoppers(double L_DesiredSpeed,
+                    double L_CurrentSpeed,
+                    double L_RampRate,
+                    double L_RampRateLow,
+                    double L_Threshold,
+                    double L_MaxDelta)
+  {
+  double L_FinalDesiredSpeed = L_DesiredSpeed;
+
+  if ((fabs(L_DesiredSpeed) < 1.0) &&
+      (fabs(L_CurrentSpeed) > 1.0))
+    {
+      if (L_CurrentSpeed > 0.0)
+      {
+        if(L_CurrentSpeed >= L_Threshold)
+        {
+          L_FinalDesiredSpeed = L_CurrentSpeed - L_RampRate;
+        } else 
+        {
+          L_FinalDesiredSpeed = L_CurrentSpeed - L_RampRateLow;
+        }
+
+        if (L_FinalDesiredSpeed < 0.0)
+        {
+          L_FinalDesiredSpeed = 0.0;
+        }
+      }
+    else
+      {
+        if(L_CurrentSpeed <= -L_Threshold)
+        {
+          L_FinalDesiredSpeed = L_CurrentSpeed + L_RampRate;
+        } else 
+        {
+           L_FinalDesiredSpeed = L_CurrentSpeed + L_RampRateLow;
+        }
+        
+        if (L_FinalDesiredSpeed > 0.0)
+        {
+          L_FinalDesiredSpeed = 0.0;
+        }
+      }
+    }
+
+  if(fabs(L_CurrentSpeed - L_FinalDesiredSpeed) >= L_MaxDelta ) {
+    if(L_FinalDesiredSpeed - L_CurrentSpeed > 0) {
+      L_FinalDesiredSpeed = L_CurrentSpeed + L_MaxDelta;
+    } 
+    else {
+      L_FinalDesiredSpeed = L_CurrentSpeed - L_MaxDelta;
+    }
+  }
+
+  return (L_FinalDesiredSpeed);
+  }
+
+
 double DesiredSpeed(double L_JoystickAxis,
                     double L_CurrentSpeed)
   {
   double L_DesiredDriveSpeed = 0.0;
-  int L_AxisSize = (int)(sizeof(K_DesiredDriveSpeedAxis) / sizeof(K_DesiredDriveSpeedAxis[0]));
+  int L_AxisSize = (int)(sizeof(K_DesiredDriveSpeedAxis) / sizeof(K_DesiredDriveSpeed[0]));
   int L_CalArraySize = (int)(sizeof(K_DesiredDriveSpeed) / sizeof(K_DesiredDriveSpeed[0]));
 
   L_DesiredDriveSpeed = LookUp1D_Table(&K_DesiredDriveSpeedAxis[0],
@@ -94,6 +158,36 @@ double DesiredSpeed(double L_JoystickAxis,
                                        L_AxisSize,
                                        L_CalArraySize,
                                        L_JoystickAxis);
+
+  L_DesiredDriveSpeed = LukeStoppers(L_DesiredDriveSpeed,
+                                     L_CurrentSpeed,
+                                     K_LukeStopperRamp,
+                                     K_LukeStopperRampLow,
+                                     K_LukeStopperThreashold,
+                                     K_LukeStopperMaxDelta);
+
+  return L_DesiredDriveSpeed;
+  }
+
+double DesiredSpeed2(double L_JoystickAxis,
+                    double L_CurrentSpeed)
+  {
+  double L_DesiredDriveSpeed = 0.0;
+  int L_AxisSize = (int)(sizeof(K_DesiredDriveSpeedAxis) / sizeof(K_DesiredDriveSpeedAxis[0]));
+  int L_CalArraySize = (int)(sizeof(K_DesiredDriveSpeedLifted) / sizeof(K_DesiredDriveSpeedLifted[0]));
+
+  L_DesiredDriveSpeed = LookUp1D_Table(&K_DesiredDriveSpeedAxis[0],
+                                       &K_DesiredDriveSpeedLifted[0],
+                                       L_AxisSize,
+                                       L_CalArraySize,
+                                       L_JoystickAxis);
+
+  L_DesiredDriveSpeed = LukeStoppers(L_DesiredDriveSpeed,
+                                     L_CurrentSpeed,
+                                     K_LukeStopperRamp,
+                                     K_LukeStopperRampLow,
+                                     K_LukeStopperThreashold,
+                                     K_LukeStopperMaxDelta);
 
   return L_DesiredDriveSpeed;
   }
