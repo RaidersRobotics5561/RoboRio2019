@@ -13,3 +13,5 @@ extern double Control_PID(double  L_DesiredSpeed,
                           double  L_DerivativeLowerLimit,
                           double  L_OutputUpperLimit,
                           double  L_OutputLowerLimit);
+
+double DesiredSpeed(double L_JoystickAxis, double L_CurrentSpeed);

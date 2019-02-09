@@ -1,5 +1,7 @@
 
 #include "enums.h"
+#include "Calibrations.hpp"
+#include "LookUp.hpp"
 
 double Control_PID(double  L_DesiredSpeed,
                    double  L_CurrentSpeed,
@@ -79,3 +81,19 @@ double Control_PID(double  L_DesiredSpeed,
 
   return L_OutputCmnd;
 }
+
+double DesiredSpeed(double L_JoystickAxis,
+                    double L_CurrentSpeed)
+  {
+  double L_DesiredDriveSpeed = 0.0;
+  int L_AxisSize = (int)(sizeof(K_DesiredDriveSpeedAxis) / sizeof(K_DesiredDriveSpeedAxis[0]));
+  int L_CalArraySize = (int)(sizeof(K_DesiredDriveSpeed) / sizeof(K_DesiredDriveSpeed[0]));
+
+  L_DesiredDriveSpeed = LookUp1D_Table(&K_DesiredDriveSpeedAxis[0],
+                                       &K_DesiredDriveSpeed[0],
+                                       L_AxisSize,
+                                       L_CalArraySize,
+                                       L_JoystickAxis);
+
+  return L_DesiredDriveSpeed;
+  }

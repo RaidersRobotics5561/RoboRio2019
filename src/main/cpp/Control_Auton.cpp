@@ -18,9 +18,9 @@ double Lift_IntPrev[E_RobotLiftSz] = {0,0};
 double Lift_DesiredPos[E_RobotLiftSz] = {0,0};
 
 
-double Drive_RawRPM[E_RobotSideSz] = {0,0};
-double Drive_ErrPrev[E_RobotSideSz] = {0,0};
-double Drive_IntPrev[E_RobotSideSz] = {0,0};
+double AutonDrive_RawRPM[E_RobotSideSz] = {0,0};
+double AutonDrive_ErrPrev[E_RobotSideSz] = {0,0};
+double AutonDrive_IntPrev[E_RobotSideSz] = {0,0};
 
 Ultrasonic *_UltraForward;
 Ultrasonic *_UltraBack;
@@ -96,13 +96,13 @@ bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, Tal
 
     double UltraDistance = _UltraForward->GetRangeInches();
 
-    Drive_RawRPM[E_RobotSideLeft]  = _talon2->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
-    Drive_RawRPM[E_RobotSideRight]  = _talon4->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
+    AutonDrive_RawRPM[E_RobotSideLeft]  = _talon2->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
+    AutonDrive_RawRPM[E_RobotSideRight]  = _talon4->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
 
     double DriveLeft = Control_PID(AutonDesiredDriveRPM,
-                                    Drive_RawRPM[E_RobotSideLeft],
-                                    &Drive_ErrPrev[E_RobotSideLeft], 
-                                    &Drive_IntPrev[E_RobotSideLeft],
+                                    AutonDrive_RawRPM[E_RobotSideLeft],
+                                    &AutonDrive_ErrPrev[E_RobotSideLeft], 
+                                    &AutonDrive_IntPrev[E_RobotSideLeft],
                                     0.001, 0.0, 0.0, //P I D 
                                     1, -0.75,    //P Upper and lower
                                     1.0, -0.1,    //I Upper and lower
@@ -110,9 +110,9 @@ bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, Tal
                                     1, -0.75); //Out Upper and lower
 
     double DriveRight = Control_PID(AutonDesiredDriveRPM,
-                                    Drive_RawRPM[E_RobotSideRight],
-                                    &Drive_ErrPrev[E_RobotSideRight], 
-                                    &Drive_IntPrev[E_RobotSideRight],
+                                    AutonDrive_RawRPM[E_RobotSideRight],
+                                    &AutonDrive_ErrPrev[E_RobotSideRight], 
+                                    &AutonDrive_IntPrev[E_RobotSideRight],
                                     0.001, 0.0, 0.0, //P I D 
                                     1, -0.75,    //P Upper and lower
                                     1.0, -0.1,    //I Upper and lower
