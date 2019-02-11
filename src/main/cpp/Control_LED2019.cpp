@@ -42,8 +42,9 @@
  ******************************************************************************/
 LED_Mode UpdateLED_Output(RoboState L_RobotState,
                           bool      L_DriverOverride,
-                          double    L_Winch,
+                          //double    L_Winch,
                           bool      *L_LED_CmndState[4])
+                          
   {
   bool L_Pin0            = false;
   bool L_Pin1            = false;
@@ -51,42 +52,48 @@ LED_Mode UpdateLED_Output(RoboState L_RobotState,
   bool L_Pin3            = false;
   LED_Mode L_LED_Mode    = LED_Mode0;
   double L_MatchTime     = DriverStation::GetInstance().GetMatchTime();
+  double C_Sandstorm     = 120;
+
 
   DriverStation::Alliance L_AllianceColor;
 
   L_AllianceColor = DriverStation::GetInstance().GetAlliance();
 
-  if (L_MatchTime < K_EndMatchWarningTime &&
+  /*if (L_MatchTime < K_EndMatchWarningTime &&
       L_RobotState == C_Teleop &&
       V_LED_RainbowLatch == false &&
       fabs(L_Winch) > K_WinchOnThreshold)
     {
     /* Accumulate time that the winch has been on while in the end game time.  Once the winch has been on long enough,
-     * trigger the final LED effect. */
+     * trigger the final LED effect. 
     V_EndGameWinchTime += C_ExeTime;
     if (V_EndGameWinchTime >= K_LED_WinchOnTime)
       {
       V_LED_RainbowLatch = true;
-      }
-    }
+      } 
+    }*/
 
   if (L_DriverOverride == true)
     {
     /* Allow the driver to always override the current LED mode. */
       L_LED_Mode = LED_Mode7;
     }
-  else if ((L_RobotState == C_Auton || L_RobotState == C_Teleop) &&
+  else if ((/*L_RobotState == C_Auton*/ L_MatchTime <= C_Sandstorm || L_RobotState == C_Teleop) &&
            (L_AllianceColor != DriverStation::Alliance::kInvalid))
     {
-      if (V_LED_RainbowLatch == true)
+      if (_joy1->GetRawButton(4))
         {
-          L_LED_Mode = LED_Mode11;
+          L_LED_Mode = LED_Mode9;
         }
+      if (L_MatchTime <= K_EndMatchWarningTime && L_LED_Mode == LED_Mode9 && LiftPos[E_RobotLiftBack] <= 1)
+      {
+          L_LED_Mode = LED_Mode10;
+      }
       else if (L_AllianceColor == DriverStation::Alliance::kBlue)
         {
-          if (/*L_MatchTime > K_EndMatchWarningTime ||*/ L_RobotState == C_Auton)
+          if (/*L_MatchTime > K_EndMatchWarningTime || L_RobotState == C_Auton*/ L_Matchtime <= C_Sandstorm )
             {
-              if (L_AutonState == C_Right)
+             /* if (L_AutonState == C_Right)
             	  {
             	  L_LED_Mode = LED_Mode13;
             	  }
@@ -95,24 +102,24 @@ LED_Mode UpdateLED_Output(RoboState L_RobotState,
             	  L_LED_Mode = LED_Mode12;
               	  }
               else
-              	  {
-            	  L_LED_Mode = LED_Mode3;
+              	  { */
+            	  L_LED_Mode = LED_Mode4; /* Blue Alliance Sandstorm */
               	  }
             }
           else if (L_MatchTime <= K_ENdMatchWarningTime)
           {
-        	  L_LED_Mode = LED_Mode8;
+        	  L_LED_Mode = LED_Mode8; /* Blue Alliance Endgame */
           }
           else
             {
-              L_LED_Mode = LED_Mode6;
+              L_LED_Mode = LED_Mode6; /* Blue Alliance Teleop */
             }
-        }
+       // }
       else if (L_AllianceColor == DriverStation::Alliance::kRed)
         {
-          if (/*L_MatchTime > K_EndMatchWarningTime ||*/ L_RobotState == C_Auton)
+          if (/*L_MatchTime > K_EndMatchWarningTime || L_RobotState == C_Auton */ L_MatchTime <= C_Sandstorm)
             {
-        	  if (L_AutonState == C_Right)
+        	  /*if (L_AutonState == C_Right)
         	  	  {
         		  L_LED_Mode = LED_Mode13;
         	  	  }
@@ -121,27 +128,31 @@ LED_Mode UpdateLED_Output(RoboState L_RobotState,
         		  L_LED_Mode = LED_Mode12;
         	  	  }
         	  else
-        	  	  {
-        		  L_LED_Mode = LED_Mode7;
+        	  	  { */
+        		  L_LED_Mode = LED_Mode3; /* Red Alliance Sandstorm */
         	  	  }
         }
           else if (L_MatchTime <= K_EndMatchWarningTime)
           {
-        	  L_LED_Mode = LED_Mode8;
+        	  L_LED_Mode = LED_Mode8; /*Red Alliance Endgame */
           }
           else
             {
-              L_LED_Mode = LED_Mode5;
+              L_LED_Mode = LED_Mode5; /* Red Alliance Teleop */
             }
         }
     }
   else if (L_RobotState == C_Disabled)
     {
-      L_LED_Mode = LED_Mode0;
+      L_LED_Mode = LED_Mode0; /*Robot On */
     }
   else if (L_RobotState == C_Test)
     {
-      L_LED_Mode = LED_Mode2;
+      L_LED_Mode = LED_Mode1; /* Robot connected to Rio */
+    }
+  else if (L_RobotState == C_PiTest)
+    {
+      L_LED_Mode = LED_Mode2; /* Robot connected to Pi */
     }
 
   switch (L_LED_Mode)
