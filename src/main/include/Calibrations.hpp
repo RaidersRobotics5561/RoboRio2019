@@ -60,3 +60,11 @@ const double K_DesiredDriveSpeedAxis[20] = {-0.95,
                                              0.75,
                                              0.85,
                                              0.95};
+
+/* Forward limit for tank drive. */
+const double K_FwdLimit = 1.0;
+
+/* Reverse limit for tank drive. */
+const double K_RevLimit = -0.5;
+
+const double K_RotateGain = 0.7;
