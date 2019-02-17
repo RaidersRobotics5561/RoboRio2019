@@ -5,15 +5,21 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-#include "Robot.h"
 #include "Control_Pid.h"
 #include "Calibrations.hpp"
-
 #include <frc/Driverstation.h>
 
 using namespace frc;
 
+double             V_RobotShimmyTime;
+T_RobotShimmyLeft  V_RobotShimmyLeft;
+T_RobotShimmyRight V_RobotShimmyRight;
+
 void Robot::RobotInit() {
+  V_RobotShimmyTime  = 0.0;
+  V_RobotShimmyLeft  = E_RobotShimmyLeft_RightBackwards;
+  V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
+
   	_talon6->ConfigSelectedFeedbackSensor(
 			FeedbackDevice::CTRE_MagEncoder_Relative, 0, 10);
 
@@ -68,16 +74,14 @@ void Robot::RobotInit() {
     _talon4->ConfigPeakOutputReverse(-1, K_TimeoutMs);
     _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
 
-    _UltraFront = new Ultrasonic(2, 3);
-    _UltraFront->SetAutomaticMode(true);
-
     _UltraBack = new Ultrasonic(0, 1);
     _UltraBack->SetAutomaticMode(true);
+
+    _UltraFront = new Ultrasonic(2, 3);
+    _UltraFront->SetAutomaticMode(true);
 }
 
 void Robot::RobotPeriodic() {
-
-
     _talon6->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
     _talon5->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
 
@@ -100,7 +104,7 @@ void Robot::RobotPeriodic() {
     double LiftOut_Backward = 0;
 
     bool Lifted = false;
-
+// Test
     while(IsEnabled() && IsOperatorControl()){
       if(IsAuton){
           AutonDriveLiftWheel(_spark1);
@@ -191,20 +195,49 @@ void Robot::RobotPeriodic() {
       V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain) - R_axis);
 
 
+      if (_joy1->GetPOV() == 270)
+        {
+        /* Shimmy to the right: */
+        if ((V_RobotShimmyTime < 2.0) &&
+            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
+          {
+          V_RobotShimmyTime += C_ExeTime;
+          }
+        else
+          {
+          V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
+          V_RobotShimmyTime = 0;
+          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
+            {
+            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+            }
+          }
 
-      if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted) {
+        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
+            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
+          {
+          Drive_Desired[E_RobotSideLeft] = 0.0;
+          Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+          }
+        else
+          {
+          Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          }
+        }
+      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
+        {
         Lifted = true;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-      } else {
+        }
+      else
+        {
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-      }
+        }
 
-      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
-      SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
+
 
       //Control Output
       LiftOut_Backward = Control_PID(DesiredPos_Backward,
@@ -249,6 +282,12 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("Drive left:", Drive_Left);
       SmartDashboard::PutNumber("Drive right:", Drive_Right);
+      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
+      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
+      SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
+      SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
+
+      SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
       //Set Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
@@ -269,8 +308,6 @@ void Robot::RobotPeriodic() {
       } else {
         _spark1->Set(0);
       }
-      
-      SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
       if(_joy1->GetRawButton(8))
       {
