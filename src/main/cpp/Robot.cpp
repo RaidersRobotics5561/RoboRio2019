@@ -177,48 +177,6 @@ void Robot::RobotPeriodic() {
         DesiredPos_Forward = 0;
       }
 
-        if (_joy1->GetPOV() == 270)
-        {
-        /* Shimmy to the right: */
-        if ((V_RobotShimmyTime < 2.0) &&
-            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
-          {
-          V_RobotShimmyTime += C_ExeTime;
-          }
-        else
-          {
-          V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
-          V_RobotShimmyTime = 0;
-          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
-            {
-            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-            }
-          }
-
-        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
-            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
-          {
-          Drive_Desired[E_RobotSideLeft] = 0.0;
-          Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-          }
-        else
-          {
-          Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-          Drive_Desired[E_RobotSideRight] = 0.0;
-          }
-        }
-      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
-        {
-        Lifted = true;
-        Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
-        Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-        }
-      else
-        {
-        Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
-        Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-        }
-
       SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
       SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
 	    L_axis = _joy1->GetRawAxis(2);
@@ -299,8 +257,6 @@ void Robot::RobotPeriodic() {
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
         }
-
-
 
       //Control Output
       LiftOut_Backward = Control_PID(DesiredPos_Backward,
