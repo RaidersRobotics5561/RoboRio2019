@@ -25,101 +25,132 @@ double AutonDrive_IntPrev[E_RobotSideSz] = {0,0};
 Ultrasonic *_UltraForward;
 Ultrasonic *_UltraBack;
 
-double AutonDesiredDriveRPM = 25;
+double AutonDesiredDriveRPM = 50;
+double LiftThresh = -400;
+double AutonPID_P[E_RobotSideSz];
+
+double liftTarget = -15500;
 
 bool AutonLiftToHight(TalonSRX *_talon6, TalonSRX *_talon5)
 {
     double Lift_BackPos = _talon6->GetSelectedSensorPosition();
     double Lift_ForwardPos = _talon5->GetSelectedSensorPosition() * -1;
 
-    Lift_DesiredPos[E_RobotLiftBack] -= 50;
-    Lift_DesiredPos[E_RobotLiftForward] -= 50;
+    SmartDashboard::PutNumber("Lift pos back", Lift_BackPos);
+    SmartDashboard::PutNumber("Lift pos forward", Lift_ForwardPos);
+
+   
+    AutonPID_P[E_RobotLiftForward] = 1 - (Lift_ForwardPos - Lift_BackPos)/LiftThresh;
+    AutonPID_P[E_RobotLiftBack] = 1 - (Lift_BackPos - Lift_ForwardPos)/LiftThresh;
+    
+    if(AutonPID_P[E_RobotLiftForward] <= 0){
+        AutonPID_P[E_RobotLiftForward] = 0; 
+    }
+
+    if(AutonPID_P[E_RobotLiftBack] <= 0){
+        AutonPID_P[E_RobotLiftBack] = 0; 
+    }
+
+    Lift_DesiredPos[E_RobotLiftBack] = liftTarget - 1000;
+    Lift_DesiredPos[E_RobotLiftForward] = liftTarget - 1000;
+
+    SmartDashboard::PutNumber("Lift_DesiredPos Forward", Lift_DesiredPos[E_RobotLiftForward]);
+    SmartDashboard::PutNumber("Lift_DesiredPos Back", Lift_DesiredPos[E_RobotLiftBack]);
 
     double LiftOut_Backward = Control_PID(Lift_DesiredPos[E_RobotLiftBack],
                             Lift_BackPos,
                             &Lift_ErrPrev[E_RobotLiftBack], 
                             &Lift_IntPrev[E_RobotLiftBack],
-                            0.001, 0.0, 0.0, //P I D 
-                            0.5, -0.5,    //P Upper and lower
+                            0.0002* AutonPID_P[E_RobotLiftBack], 0.0003, 0.0, //P I D 
+                            0.75, -0.75,    //P Upper and lower
                             1.0, -0.1,    //I Upper and lower
                             0,0,          //D Upper and lower
-                            0.5, -0.5); //Out Upper and lower
+                            1, -1); //Out Upper and lower
 
     double LiftOut_Forward = Control_PID(Lift_DesiredPos[E_RobotLiftForward],
                             Lift_ForwardPos,
                             &Lift_ErrPrev[E_RobotLiftForward], 
                             &Lift_IntPrev[E_RobotLiftForward],
-                            0.001, 0.0, 0.0, //P I D 
-                            0.5, -0.5,    //P Upper and lower
+                            0.0004 * AutonPID_P[E_RobotLiftForward], 0.0003, 0.0, //P I D 
+                            0.75, -0.75,    //P Upper and lower
                             1.0, -0.1,    //I Upper and lower
                             0,0,          //D Upper and lower
-                            0.5, -0.5); //Out Upper and lower
+                            1, -1); //Out Upper and lower
+
     
-    if(Lift_BackPos > -15500){
+
+    SmartDashboard::PutNumber("Lift out Back", LiftOut_Backward);
+    SmartDashboard::PutNumber("Lift out forward", LiftOut_Forward);
+
+    SmartDashboard::PutNumber("P LEFT", 0.0004 * AutonPID_P[E_RobotLiftForward]);
+    SmartDashboard::PutNumber("P RIGHT", 0.0002 * AutonPID_P[E_RobotLiftBack]);
+    
+    if(Lift_BackPos > liftTarget){
         _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
     } else {
         _talon6->Set(ControlMode::PercentOutput, 0);
     }
 
-    if(Lift_ForwardPos > -15500){
+    if(Lift_ForwardPos > liftTarget){
         _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
     } else {
         _talon5->Set(ControlMode::PercentOutput, 0);
     }
     
-    if(Lift_BackPos > -15500 && Lift_ForwardPos > -15500){
+    if(Lift_BackPos < liftTarget && Lift_ForwardPos < liftTarget){
+        SmartDashboard::PutBoolean("Done", true);
         return true;
     } else {
         return false;
     }
 }
 
-bool AutonDriveLiftWheel(Spark *_spark1)
+bool AutonDriveLiftWheel(Spark *_spark1, Ultrasonic *_Ultrasonic)
 {
-    // _UltraForward = new Ultrasonic(7, 6);
-    // _UltraForward->SetAutomaticMode(true);
 
-    // double UltraDistance = _UltraForward->GetRangeInches();
+    double UltraDistance = _Ultrasonic->GetRangeInches();
 
-    if(true){
-       _spark1->Set(0.5);
+    SmartDashboard::PutNumber("UltraDistance", UltraDistance);
+
+    if(UltraDistance >= 5){
+       _spark1->Set(1);
        return false;
     } else {
+        _spark1->Set(0.0);
         return true;
     }
 }
 
-bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, TalonSRX *_talon4)
+bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, TalonSRX *_talon4, Ultrasonic *_Ultrasonic)
 {
-    _UltraForward = new Ultrasonic(9, 8);
-    _UltraForward->SetAutomaticMode(true);
+    double UltraDistance = _Ultrasonic->GetRangeInches();
 
-    double UltraDistance = _UltraForward->GetRangeInches();
-
-    AutonDrive_RawRPM[E_RobotSideLeft]  = _talon2->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
-    AutonDrive_RawRPM[E_RobotSideRight]  = _talon4->GetSelectedSensorVelocity(0) / K_WheelPulseToRev;
+    SmartDashboard::PutNumber("Ultra Main Drive", UltraDistance);
+    
+    AutonDrive_RawRPM[E_RobotSideLeft]  = (_talon2->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev;
+    AutonDrive_RawRPM[E_RobotSideRight]  = ((_talon4->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev) * -1;
 
     double DriveLeft = Control_PID(AutonDesiredDriveRPM,
                                     AutonDrive_RawRPM[E_RobotSideLeft],
                                     &AutonDrive_ErrPrev[E_RobotSideLeft], 
                                     &AutonDrive_IntPrev[E_RobotSideLeft],
-                                    0.001, 0.0, 0.0, //P I D 
+                                    0.001, 0.0003, 0.0, //P I D 
                                     1, -0.75,    //P Upper and lower
                                     1.0, -0.1,    //I Upper and lower
                                     0,0,          //D Upper and lower
                                     1, -0.75); //Out Upper and lower
 
-    double DriveRight = Control_PID(AutonDesiredDriveRPM,
+    double DriveRight = -Control_PID(AutonDesiredDriveRPM,
                                     AutonDrive_RawRPM[E_RobotSideRight],
                                     &AutonDrive_ErrPrev[E_RobotSideRight], 
                                     &AutonDrive_IntPrev[E_RobotSideRight],
-                                    0.001, 0.0, 0.0, //P I D 
+                                    0.001, 0.0003, 0.0, //P I D 
                                     1, -0.75,    //P Upper and lower
                                     1.0, -0.1,    //I Upper and lower
                                     0,0,          //D Upper and lower
                                     1, -0.75); //Out Upper and lower
 
-    if(UltraDistance < 12){
+    if(UltraDistance <= 5){
         _talon1->Set(ControlMode::PercentOutput, 0);
         _talon2->Set(ControlMode::PercentOutput, 0);
 
@@ -141,18 +172,20 @@ bool AutonRaiseBackLift(TalonSRX *_talon6)
 {
     double Lift_BackPos = _talon6->GetSelectedSensorPosition();
 
+    SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos); 
+
     double Lift_Desired = 0;
     double LiftOut_Backward = Control_PID(Lift_Desired,
                             Lift_BackPos,
                             &Lift_ErrPrev[E_RobotLiftBack], 
                             &Lift_IntPrev[E_RobotLiftBack],
-                            0.001, 0.0, 0.0, //P I D 
-                            0.5, -0.5,    //P Upper and lower
+                            0.005, 0.0, 0.0, //P I D 
+                            1, -1,    //P Upper and lower
                             1.0, -0.1,    //I Upper and lower
                             0,0,          //D Upper and lower
-                            0.5, -0.5); //Out Upper and lower
+                            1, -1); //Out Upper and lower
 
-    if(Lift_BackPos >= 0)
+    if(Lift_BackPos >= -150)
     {
         _talon6->Set(ControlMode::PercentOutput, 0);
         return true;
@@ -166,23 +199,66 @@ bool AutonRaiseForwardLift(TalonSRX *_talon5)
 {
     double Lift_ForwardPos = _talon5->GetSelectedSensorPosition() * -1; 
 
+    SmartDashboard::PutNumber("Lift pos forward", Lift_ForwardPos);
+
     double Lift_Desired = 0;
-    double LiftOut_Backward = Control_PID(Lift_Desired,
+    double LiftOut_Forward = Control_PID(Lift_Desired,
                             Lift_ForwardPos,
                             &Lift_ErrPrev[E_RobotLiftForward], 
                             &Lift_IntPrev[E_RobotLiftForward],
-                            0.001, 0.0, 0.0, //P I D 
-                            0.5, -0.5,    //P Upper and lower
+                            0.005, 0.0, 0.0, //P I D 
+                            1, -1,    //P Upper and lower
                             1.0, -0.1,    //I Upper and lower
                             0,0,          //D Upper and lower
-                            0.5, -0.5); //Out Upper and lower
+                            1, -1); //Out Upper and lower
     
-    if(Lift_ForwardPos >= 0)
+    if(Lift_ForwardPos >= -150)
     {
         _talon5->Set(ControlMode::PercentOutput, 0);
         return true;
     } else {
-        _talon5->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+        _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
         return false;
     }
 }
+
+bool MaintainBackLift(TalonSRX *_talon6)
+{
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition(); 
+
+    SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos); 
+
+    double Lift_Desired = -15500 - 250;
+    double LiftOut_Backward = Control_PID(Lift_Desired,
+                            Lift_BackPos,
+                            &Lift_ErrPrev[E_RobotLiftBack], 
+                            &Lift_IntPrev[E_RobotLiftBack],
+                            0.0002, 0.0003, 0.0, //P I D 
+                            0.75, -0.75,    //P Upper and lower
+                            1.0, -0.1,    //I Upper and lower
+                            0,0,          //D Upper and lower
+                            1, -1); //Out Upper and lower
+
+    _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+}
+
+bool MaintainForwardLift(TalonSRX *_talon5)
+{
+    double Lift_BackPos = _talon5->GetSelectedSensorPosition() * -1;
+
+    SmartDashboard::PutNumber("Lift pos forward", Lift_BackPos); 
+
+    double Lift_Desired = -15500 - 250;
+    double LiftOut_Backward = Control_PID(Lift_Desired,
+                            Lift_BackPos,
+                            &Lift_ErrPrev[E_RobotLiftForward], 
+                            &Lift_IntPrev[E_RobotLiftForward],
+                            0.0004, 0.0003, 0.0, //P I D 
+                            0.75, -0.75,    //P Upper and lower
+                            1.0, -0.1,    //I Upper and lower
+                            0,0,          //D Upper and lower
+                            1, -1); //Out Upper and lower
+
+    _talon5->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+}
+

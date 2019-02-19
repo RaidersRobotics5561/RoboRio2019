@@ -45,5 +45,8 @@ class Robot : public frc::IterativeRobot {
 
   Spark *_spark1 = new Spark(0);
 
+  Ultrasonic *_UltraForward;
+  Ultrasonic *_UltraBack;
+
   Joystick *_joy1 = new Joystick(0);
 };
