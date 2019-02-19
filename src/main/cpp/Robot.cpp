@@ -5,10 +5,8 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-#include "Robot.h"
 #include "Control_Pid.h"
 #include "Calibrations.hpp"
-
 #include <frc/Driverstation.h>
 
 using namespace frc;
@@ -24,7 +22,7 @@ void Robot::RobotInit() {
 
   	_talon6->ConfigSelectedFeedbackSensor(
 			FeedbackDevice::CTRE_MagEncoder_Relative, 0, 10);
-    
+
     //Back Lift
     _talon6->SetSensorPhase(true);
     _talon6->ConfigNominalOutputForward(0, K_TimeoutMs);
@@ -74,16 +72,14 @@ void Robot::RobotInit() {
     _talon4->ConfigPeakOutputReverse(-1, K_TimeoutMs);
     _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
 
-    _UltraForward = new Ultrasonic(2,3);
-    _UltraForward->SetAutomaticMode(true);
-
-    _UltraBack = new Ultrasonic(0,1);
+    _UltraBack = new Ultrasonic(0, 1);
     _UltraBack->SetAutomaticMode(true);
+
+    _UltraFront = new Ultrasonic(2, 3);
+    _UltraFront->SetAutomaticMode(true);
 }
 
 void Robot::RobotPeriodic() {
-  
-  
     _talon6->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
     _talon5->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
 
@@ -93,13 +89,17 @@ void Robot::RobotPeriodic() {
     DesiredPos_Forward = 0;
 
     double Drive_Desired[E_RobotSideSz] = {0,0};
-    double Drive_RPMRaw[E_RobotSideSz];
+    double Drive_RPMRaw[E_RobotSideSz] = {0,0};
     double Drive_ErrPrev[E_RobotSideSz] = {0,0};
     double Drive_IntPrev[E_RobotSideSz] = {0,0};
 
+    double L_axis = 0;
+    double R_axis = 0;
+    double LiftOut_Forward = 0;
+    double Drive_Left = 0;
+    double Drive_Right = 0;
     double V_RobotUserCmndPct[E_RobotSideSz] = {0,0};
-
-    const double V_RotateGain = 0.7;
+    double LiftOut_Backward = 0;
 
     int AutonStep = 0;
     bool Lifted = false;
@@ -128,7 +128,7 @@ void Robot::RobotPeriodic() {
       }else if(IsAuton){
           
       } else {
-      //Back Lift Pos 
+      //Back Lift Pos
       Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition();
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
       
@@ -137,6 +137,9 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("Drive RPM Left:", Drive_RPMRaw[E_RobotSideLeft]);
       SmartDashboard::PutNumber("Drive RPM Right:", Drive_RPMRaw[E_RobotSideRight]);
+
+      SmartDashboard::PutNumber("Ultra Front:", _UltraFront->GetRangeInches());
+      SmartDashboard::PutNumber("Ultra Back:", _UltraBack->GetRangeInches());
 
       //y
       if(_joy1->GetRawButton(4)){
@@ -160,7 +163,7 @@ void Robot::RobotPeriodic() {
       //DesiredPos Limit
       if (DesiredPos_Backward < -15500.0){
         DesiredPos_Backward = -15500.0;
-      } 
+      }
       else if (DesiredPos_Backward > 0)
       {
         DesiredPos_Backward = 0;
@@ -168,14 +171,11 @@ void Robot::RobotPeriodic() {
 
       if (DesiredPos_Forward < -15500.0){
         DesiredPos_Forward = -15500.0;
-      } 
+      }
       else if (DesiredPos_Forward > 0)
       {
         DesiredPos_Forward = 0;
       }
-      
-      V_RobotUserCmndPct[E_RobotSideLeft]  = -(_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * V_RotateGain));
-      V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * V_RotateGain));
 
         if (_joy1->GetPOV() == 270)
         {
@@ -221,54 +221,123 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
       SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
+	    L_axis = _joy1->GetRawAxis(2);
+      R_axis = _joy1->GetRawAxis(3);
 
-      if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted) {
+      if(_joy1->GetRawButton(5))
+      {
+        L_axis = K_RevLimit;
+      }
+
+      if(_joy1->GetRawButton(6))
+      {
+        R_axis = K_RevLimit;
+      }
+
+      if(L_axis > K_FwdLimit)
+        {
+        L_axis = K_FwdLimit;
+        }
+
+      if(R_axis > K_FwdLimit)
+        {
+        R_axis = K_FwdLimit;
+        }
+
+      if(L_axis < K_RevLimit)
+        {
+        L_axis = K_RevLimit;
+        }
+
+      if(R_axis < K_RevLimit)
+        {
+        R_axis = K_RevLimit;
+        }
+
+      V_RobotUserCmndPct[E_RobotSideLeft]  = -(_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * K_RotateGain) - L_axis);
+      V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain) - R_axis);
+
+
+      if (_joy1->GetPOV() == 270)
+        {
+        /* Shimmy to the right: */
+        if ((V_RobotShimmyTime < 2.0) &&
+            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
+          {
+          V_RobotShimmyTime += C_ExeTime;
+          }
+        else
+          {
+          V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
+          V_RobotShimmyTime = 0;
+          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
+            {
+            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+            }
+          }
+
+        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
+            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
+          {
+          Drive_Desired[E_RobotSideLeft] = 0.0;
+          Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+          }
+        else
+          {
+          Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          }
+        }
+      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
+        {
         Lifted = true;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-      } else {
+        }
+      else
+        {
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-      }
-        SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
-        SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
-      
+        }
+
+
+
       //Control Output
-      double LiftOut_Backward = Control_PID(DesiredPos_Backward,
-                            Lift_Pos[E_RobotLiftBack],
-                            &ErrPrev_Lift[E_RobotLiftBack], 
-                            &IntPrev_Lift[E_RobotLiftBack],
-                            0.001, 0.0, 0.0, //P I D 
-                            1, -0.75,    //P Upper and lower
-                            1.0, -0.1,    //I Upper and lower
-                            0,0,          //D Upper and lower
-                            1, -0.75); //Out Upper and lower
+      LiftOut_Backward = Control_PID(DesiredPos_Backward,
+                                     Lift_Pos[E_RobotLiftBack],
+                                     &ErrPrev_Lift[E_RobotLiftBack],
+                                     &IntPrev_Lift[E_RobotLiftBack],
+                                     0.001, 0.0, 0.0, //P I D
+                                     1, -0.75,    //P Upper and lower
+                                     1.0, -0.1,    //I Upper and lower
+                                     0,0,          //D Upper and lower
+                                     1, -0.75); //Out Upper and lower
 
-      double LiftOut_Forward = Control_PID(DesiredPos_Forward,
+      LiftOut_Forward = Control_PID(DesiredPos_Forward,
                             Lift_Pos[E_RobotLiftForward],
-                            &ErrPrev_Lift[E_RobotLiftForward], 
+                            &ErrPrev_Lift[E_RobotLiftForward],
                             &IntPrev_Lift[E_RobotLiftForward],
-                            0.001, 0.0, 0.0, //P I D 
+                            0.001, 0.0, 0.0, //P I D
                             1, -0.75,    //P Upper and lower
                             1.0, -0.1,    //I Upper and lower
                             0,0,          //D Upper and lower
                             1, -0.75); //Out Upper and lower
 
-      double Drive_Left = Control_PID(Drive_Desired[E_RobotSideLeft],
+      Drive_Left = Control_PID(Drive_Desired[E_RobotSideLeft],
                             Drive_RPMRaw[E_RobotSideLeft],
-                            &Drive_ErrPrev[E_RobotSideLeft], 
+                            &Drive_ErrPrev[E_RobotSideLeft],
                             &Drive_IntPrev[E_RobotSideLeft],
-                            0.002, 0.0005, 0.0, //P I D 
+                            0.002, 0.0005, 0.0, //P I D
                             0.7, -0.7,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             0,0,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
-      double Drive_Right = -1 * Control_PID(Drive_Desired[E_RobotSideRight],
+      Drive_Right = -1 * Control_PID(Drive_Desired[E_RobotSideRight],
                             Drive_RPMRaw[E_RobotSideRight],
-                            &Drive_ErrPrev[E_RobotSideRight], 
                             &Drive_ErrPrev[E_RobotSideRight],
-                            0.002, 0.0005, 0.0, //P I D 
+                            &Drive_ErrPrev[E_RobotSideRight],
+                            0.002, 0.0005, 0.0, //P I D
                             0.7, -0.7,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             0,0,          //D Upper and lower
@@ -276,39 +345,28 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("Drive left:", Drive_Left);
       SmartDashboard::PutNumber("Drive right:", Drive_Right);
-                      
+      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
+      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
+      SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
+      SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
+
+      SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
+
       //Set Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
       _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
 
       //Tank Drive
 
-      double L_axis = _joy1->GetRawAxis(1) * -1;
-      double R_axis = _joy1->GetRawAxis(5);
 
-      if(L_axis > 0.5){
-        L_axis = 0.5;
-      }
-
-      if(R_axis > 0.5){
-        R_axis = 0.5;
-      }
-
-      if(L_axis < -0.5){
-        L_axis = -0.5;
-      }
-
-      if(R_axis < -0.5){
-        R_axis = -0.5;
-      }
-  
       _talon1->Set(ControlMode::PercentOutput, Drive_Left);
       _talon2->Set(ControlMode::PercentOutput, Drive_Left);
-      
+
       _talon3->Set(ControlMode::PercentOutput, Drive_Right);
       _talon4->Set(ControlMode::PercentOutput, Drive_Right);
 
-      if(_joy1->GetRawButton(5)){
+
+      if(_joy1->GetPOV() == 0){
         _spark1->Set(0.5);
       } else {
         _spark1->Set(0);

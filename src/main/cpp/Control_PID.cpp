@@ -1,14 +1,12 @@
 
-#include "enums.h"
 #include "Calibrations.hpp"
 #include "LookUp.hpp"
-#include "const.h"
 
 double K_LukeStopperRamp = 40;
 double K_LukeStopperRampLow = 25;
 double K_LukeStopperThreashold = 75;
 
-double K_LukeStopperMaxDelta = 40; 
+double K_LukeStopperMaxDelta = 40;
 
 double Control_PID(double  L_DesiredSpeed,
                    double  L_CurrentSpeed,
@@ -106,7 +104,7 @@ double LukeStoppers(double L_DesiredSpeed,
         if(L_CurrentSpeed >= L_Threshold)
         {
           L_FinalDesiredSpeed = L_CurrentSpeed - L_RampRate;
-        } else 
+        } else
         {
           L_FinalDesiredSpeed = L_CurrentSpeed - L_RampRateLow;
         }
@@ -121,11 +119,11 @@ double LukeStoppers(double L_DesiredSpeed,
         if(L_CurrentSpeed <= -L_Threshold)
         {
           L_FinalDesiredSpeed = L_CurrentSpeed + L_RampRate;
-        } else 
+        } else
         {
            L_FinalDesiredSpeed = L_CurrentSpeed + L_RampRateLow;
         }
-        
+
         if (L_FinalDesiredSpeed > 0.0)
         {
           L_FinalDesiredSpeed = 0.0;
@@ -136,7 +134,7 @@ double LukeStoppers(double L_DesiredSpeed,
   if(fabs(L_CurrentSpeed - L_FinalDesiredSpeed) >= L_MaxDelta ) {
     if(L_FinalDesiredSpeed - L_CurrentSpeed > 0) {
       L_FinalDesiredSpeed = L_CurrentSpeed + L_MaxDelta;
-    } 
+    }
     else {
       L_FinalDesiredSpeed = L_CurrentSpeed - L_MaxDelta;
     }

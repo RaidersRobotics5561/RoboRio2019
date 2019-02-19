@@ -49,4 +49,7 @@ class Robot : public frc::IterativeRobot {
   Ultrasonic *_UltraBack;
 
   Joystick *_joy1 = new Joystick(0);
+
+  Ultrasonic *_UltraFront;
+  Ultrasonic *_UltraBack;
 };
