@@ -44,11 +44,11 @@ class Robot : public frc::IterativeRobot {
   TalonSRX * _talon5 = new TalonSRX(5);
 
   Spark *_spark1 = new Spark(0);
-
-  Ultrasonic *_UltraForward;
-  Ultrasonic *_UltraBack;
+  Spark *_spark2 = new Spark(1);
+  Spark *_spark3 = new Spark(2);
 
   Joystick *_joy1 = new Joystick(0);
+  Joystick *_joy2 = new Joystick(1);
 
   Ultrasonic *_UltraFront;
   Ultrasonic *_UltraBack;

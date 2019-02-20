@@ -103,14 +103,19 @@ void Robot::RobotPeriodic() {
 
     int AutonStep = 0;
     bool Lifted = false;
-    bool test = true;
+    bool test = false;
     bool autonComp[9] = {false,false,false,false,false,false,false,false,false};
     while(IsEnabled() && IsOperatorControl()){
       if(test){
+        double UltraDistance = _UltraFront->GetRangeInches();
+
+        SmartDashboard::PutNumber("UltraDistance", UltraDistance);
+        Wait(C_ExeTime);
+      }else if(IsAuton){
         if(autonComp[0] == false){
           autonComp[0] = AutonLiftToHight(_talon6, _talon5);
         } else if(autonComp[1] == false) {
-          autonComp[1] = AutonDriveLiftWheel(_spark1, _UltraForward);
+          autonComp[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
           MaintainBackLift(_talon6);
           MaintainForwardLift(_talon5);
         } else if(autonComp[2] == false) {
@@ -121,16 +126,20 @@ void Robot::RobotPeriodic() {
           MaintainBackLift(_talon6);
         } else if(autonComp[4] == false) {
           autonComp[4] = AutonRaiseBackLift(_talon6);
-        }
-
+        }    
         SmartDashboard::PutBoolean("Step 0", autonComp[0]);
-         Wait(C_ExeTime);
-      }else if(IsAuton){
-          
+        SmartDashboard::PutBoolean("Step 1", autonComp[1]);
+        SmartDashboard::PutBoolean("Step 2", autonComp[2]);
+        SmartDashboard::PutBoolean("Step 3", autonComp[3]);
+        SmartDashboard::PutBoolean("Step 4", autonComp[4]);
+        Wait(C_ExeTime);
       } else {
       //Back Lift Pos
-      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition();
+      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * -1; 
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
+      
+      SmartDashboard::PutNumber("LiftPos Back:", Lift_Pos[E_RobotLiftBack]);
+      SmartDashboard::PutNumber("LiftPos Forward:", Lift_Pos[E_RobotLiftForward]);
       
       Drive_RPMRaw[E_RobotSideLeft] = (_talon2->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev;
       Drive_RPMRaw[E_RobotSideRight] = ((_talon4->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev) * -1;
@@ -142,20 +151,20 @@ void Robot::RobotPeriodic() {
       SmartDashboard::PutNumber("Ultra Back:", _UltraBack->GetRangeInches());
 
       //y
-      if(_joy1->GetRawButton(4)){
+      if(_joy2->GetRawButton(4)){
         DesiredPos_Backward -= 100;
         DesiredPos_Forward -= 100;
       }
       //x
-      if(_joy1->GetRawButton(3)){
+      if(_joy2->GetRawButton(3)){
         DesiredPos_Forward += 100;
       }
       //b
-      if(_joy1->GetRawButton(2)){
+      if(_joy2->GetRawButton(2)){
         DesiredPos_Backward += 100;
       }
       //a
-      if(_joy1->GetRawButton(1)){
+      if(_joy2->GetRawButton(1)){
         DesiredPos_Backward += 100;
         DesiredPos_Forward += 100;
       }
@@ -216,37 +225,38 @@ void Robot::RobotPeriodic() {
       V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain) - R_axis);
 
 
-      if (_joy1->GetPOV() == 270)
-        {
-        /* Shimmy to the right: */
-        if ((V_RobotShimmyTime < 2.0) &&
-            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
-          {
-          V_RobotShimmyTime += C_ExeTime;
-          }
-        else
-          {
-          V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
-          V_RobotShimmyTime = 0;
-          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
-            {
-            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-            }
-          }
+      // if (_joy1->GetPOV() == 270)
+      //   {
+      //   /* Shimmy to the right: */
+      //   if ((V_RobotShimmyTime < 2.0) &&
+      //       (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
+      //     {
+      //     V_RobotShimmyTime += C_ExeTime;
+      //     }
+      //   else
+      //     {
+      //     V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
+      //     V_RobotShimmyTime = 0;
+      //     if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
+      //       {
+      //       V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+      //       }
+      //     }
 
-        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
-            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
-          {
-          Drive_Desired[E_RobotSideLeft] = 0.0;
-          Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-          }
-        else
-          {
-          Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-          Drive_Desired[E_RobotSideRight] = 0.0;
-          }
-        }
-      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
+      //   if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
+      //       (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
+      //     {
+      //     Drive_Desired[E_RobotSideLeft] = 0.0;
+      //     Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+      //     }
+      //   else
+      //     {
+      //     Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
+      //     Drive_Desired[E_RobotSideRight] = 0.0;
+      //     }
+      //   }
+      //else 
+      if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
         {
         Lifted = true;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
@@ -310,7 +320,7 @@ void Robot::RobotPeriodic() {
 
       //Set Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
-      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
 
       //Tank Drive
 
@@ -322,10 +332,34 @@ void Robot::RobotPeriodic() {
       _talon4->Set(ControlMode::PercentOutput, Drive_Right);
 
 
-      if(_joy1->GetPOV() == 0){
-        _spark1->Set(0.5);
+      if(_joy2->GetPOV() == 90){
+        _spark1->Set(1);
       } else {
         _spark1->Set(0);
+      }
+
+      if(_joy2->GetRawAxis(3) > 0.05){
+        _spark2->Set(_joy2->GetRawAxis(3));
+      }
+
+      if(_joy2->GetRawAxis(2) > 0.05){
+        _spark2->Set(_joy2->GetRawAxis(2) * -1);
+      }
+
+      // if(_joy2->GetPOV() == 0){
+      //   _spark2->Set(0.75);
+      // } else if(_joy2->GetPOV() == 180){
+      //   _spark2->Set(-0.5);
+      // } else {
+      //   _spark2->Set(0);
+      // }
+
+      if(_joy2->GetRawButton(5)){
+        _spark3->Set(0.5);
+      } else if(_joy2->GetRawButton(6)){
+        _spark3->Set(-0.5);
+      } else {
+        _spark3->Set(0);
       }
 
       if(_joy1->GetRawButton(8))
