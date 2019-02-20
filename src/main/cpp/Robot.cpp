@@ -11,14 +11,16 @@
 
 using namespace frc;
 
-double V_RobotShimmyTime;
+double             V_RobotShimmyRightTime;
+double             V_RobotShimmyLeftTime;
 T_RobotShimmyLeft  V_RobotShimmyLeft;
 T_RobotShimmyRight V_RobotShimmyRight;
 
 void Robot::RobotInit() {
-    V_RobotShimmyTime  = 0.0;
-    V_RobotShimmyLeft  = E_RobotShimmyLeft_RightBackwards;
-    V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
+  V_RobotShimmyRightTime  = 0.0;
+  V_RobotShimmyLeftTime   = 0.0;
+  V_RobotShimmyLeft  = E_RobotShimmyLeft_RightBackwards;
+  V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
 
   	_talon6->ConfigSelectedFeedbackSensor(
 			FeedbackDevice::CTRE_MagEncoder_Relative, 0, 10);
@@ -225,48 +227,114 @@ void Robot::RobotPeriodic() {
       V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain) - R_axis);
 
 
-      // if (_joy1->GetPOV() == 270)
-      //   {
-      //   /* Shimmy to the right: */
-      //   if ((V_RobotShimmyTime < 2.0) &&
-      //       (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
-      //     {
-      //     V_RobotShimmyTime += C_ExeTime;
-      //     }
-      //   else
-      //     {
-      //     V_RobotShimmyLeft = V_RobotShimmyLeft + 1;
-      //     V_RobotShimmyTime = 0;
-      //     if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
-      //       {
-      //       V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-      //       }
-      //     }
-
-      //   if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
-      //       (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
-      //     {
-      //     Drive_Desired[E_RobotSideLeft] = 0.0;
-      //     Drive_Desired[E_RobotSideRight] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-      //     }
-      //   else
-      //     {
-      //     Drive_Desired[E_RobotSideLeft] = K_RobotShimmyLeft[V_RobotShimmyLeft];
-      //     Drive_Desired[E_RobotSideRight] = 0.0;
-      //     }
-      //   }
-      //else 
-      if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
+      if (_joy1->GetPOV() == 270)
         {
+        /* Shimmy to the left: */
+        if ((V_RobotShimmyLeftTime < K_RobotShimmyTime) &&
+            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
+          {
+          V_RobotShimmyLeftTime += C_ExeTime;
+          }
+        else
+          {
+          V_RobotShimmyLeft = T_RobotShimmyLeft(int(V_RobotShimmyLeft) + 1);
+          V_RobotShimmyLeftTime = 0;
+          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
+            {
+            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+            }
+          }
+
+        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
+            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
+          {
+          Drive_Desired[E_RobotSideLeft] = 0.0;
+          if (V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards)
+            {
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            }
+          else
+            {
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            }
+          }
+        else
+          {
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          if (V_RobotShimmyLeft == E_RobotShimmyLeft_LeftBackwards)
+            {
+            Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
+            }
+          else
+            {
+            Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
+            }
+          }
+        }
+      else if (_joy1->GetPOV() == 90)
+        {
+        /* Shimmy to the right: */
+        if ((V_RobotShimmyRightTime < K_RobotShimmyTime) &&
+            (V_RobotShimmyRight < E_RobotShimmyRight_ShimmySz))
+          {
+          V_RobotShimmyRightTime += C_ExeTime;
+          }
+        else
+          {
+          V_RobotShimmyRight = T_RobotShimmyRight(int(V_RobotShimmyRight) + 1);
+          V_RobotShimmyRightTime = 0;
+          if (V_RobotShimmyRight >= E_RobotShimmyRight_ShimmySz)
+            {
+            V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
+            }
+          }
+
+        if ((V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards) ||
+            (V_RobotShimmyRight == E_RobotShimmyRight_LeftForward))
+          {
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          if (V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards)
+            {
+            Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
+            }
+          else
+            {
+            Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
+            }
+          }
+        else
+          {
+          Drive_Desired[E_RobotSideLeft] = 0.0;
+          if (V_RobotShimmyRight == E_RobotShimmyRight_RightBackwards)
+            {
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            }
+          else
+            {
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            }
+          }
+        }
+      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
+        {
+        V_RobotShimmyRightTime  = 0.0;
+        V_RobotShimmyLeftTime   = 0.0;
+        V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+        V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
         Lifted = true;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
         }
       else
         {
+        V_RobotShimmyRightTime  = 0.0;
+        V_RobotShimmyLeftTime   = 0.0;
+        V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
+        V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
         }
+
 
       //Control Output
       LiftOut_Backward = Control_PID(DesiredPos_Backward,
