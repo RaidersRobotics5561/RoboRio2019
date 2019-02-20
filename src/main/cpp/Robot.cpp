@@ -13,12 +13,14 @@ using namespace frc;
 
 double             V_RobotShimmyRightTime;
 double             V_RobotShimmyLeftTime;
+double             V_SwingScale;
 T_RobotShimmyLeft  V_RobotShimmyLeft;
 T_RobotShimmyRight V_RobotShimmyRight;
 
 void Robot::RobotInit() {
   V_RobotShimmyRightTime  = 0.0;
   V_RobotShimmyLeftTime   = 0.0;
+  V_SwingScale = 0.75;
   V_RobotShimmyLeft  = E_RobotShimmyLeft_RightBackwards;
   V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
 
@@ -406,12 +408,12 @@ void Robot::RobotPeriodic() {
         _spark1->Set(0);
       }
 
-      if(_joy2->GetRawAxis(3) > 0.05){
-        _spark2->Set(_joy2->GetRawAxis(3));
+      if(_joy2->GetRawAxis(3) * V_SwingScale > 0.05){
+        _spark2->Set(_joy2->GetRawAxis(3) * V_SwingScale);
       }
 
-      if(_joy2->GetRawAxis(2) > 0.05){
-        _spark2->Set(_joy2->GetRawAxis(2) * -1);
+      if(_joy2->GetRawAxis(2) * V_SwingScale > 0.05){
+        _spark2->Set((_joy2->GetRawAxis(2) * V_SwingScale) * -1);
       }
 
       // if(_joy2->GetPOV() == 0){

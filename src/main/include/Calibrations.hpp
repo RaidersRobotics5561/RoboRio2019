@@ -1,25 +1,25 @@
 #include "Robot.h"
 
-const double K_DesiredDriveSpeed[20] = {-150.00,  //-0.95
-                                        -111.56,  //-0.85
-                                         -84.375, //-0.75
-                                         -56.25,//-0.65
-                                         -37.5,  //-0.55
-                                         -28.125, //-0.45
-                                         -18.75,  //-0.35
-                                          -9.375,  //-0.25
-                                          -2.50,  //-0.15
+const double K_DesiredDriveSpeed[20] = {-300,  //-0.95
+                                        -223.125,  //-0.85
+                                         -168.75, //-0.75
+                                         -112.5,//-0.65
+                                         -75,  //-0.55
+                                         -56.25, //-0.45
+                                         -37.5,  //-0.35
+                                          -18.75,  //-0.25
+                                          -5,  //-0.15
                                            0.00,  //-0.10
                                            0.00,  // 0.10
-                                           2.50,  // 0.15
-                                           9.375,  // 0.25
-                                          18.75,  // 0.35
-                                          28.125,  // 0.45
-                                          37.5,  // 0.55
-                                          56.25,  // 0.65
-                                          84.375,  // 0.75
-                                         111.56,  // 0.85
-                                         150.00}; // 0.95
+                                           5,  // 0.15
+                                           18.75,  // 0.25
+                                          37.5,  // 0.35
+                                          56.25,  // 0.45
+                                          75,  // 0.55
+                                          112.5,  // 0.65
+                                          168.75,  // 0.75
+                                         223.125,  // 0.85
+                                         300.00}; // 0.95
 
 const double K_DesiredDriveSpeedLifted[20] = {-37.5,  //-0.95
                                         -27.9,  //-0.85
@@ -72,17 +72,6 @@ const double K_RevLimit = -0.75;
 /* K_RotateGain: Rotation gain for arcade drive. */
 const double K_RotateGain = 0.7;
 
+const double K_RobotShimmySpeed = 160;
 
-/* K_RobotShimmyRight: Distance that the robot will shimmy.  For the right shimmy only. (inches) */
-const double K_RobotShimmyRight[E_RobotShimmyRight_ShimmySz] =
-    {-3.0,  //   E_RobotLeftBackwards
-     -3.0,  //   E_RobotRightBackwards
-      3.0,  //   E_RobotLeftForward
-      3.0}; //   E_RobotRightForward
-
-/* K_RobotShimmyLeft: Distance that the robot will shimmy.  For the left shimmy only. (inches) */
-const double K_RobotShimmyLeft[E_RobotShimmyLeft_ShimmySz] =
-    {-3.0,  //   E_RobotLeftBackwards
-     -3.0,  //   E_RobotRightBackwards
-      3.0,  //   E_RobotLeftForward
-      3.0}; //   E_RobotRightForward
+const double K_RobotShimmyTime = 0.1;
