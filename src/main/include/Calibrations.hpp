@@ -72,17 +72,8 @@ const double K_RevLimit = -0.75;
 /* K_RotateGain: Rotation gain for arcade drive. */
 const double K_RotateGain = 0.7;
 
+/* K_RobotShimmySpeed: Speed that the robot will shimmy. (RPM) */
+const double K_RobotShimmySpeed = 160;
 
-/* K_RobotShimmyRight: Distance that the robot will shimmy.  For the right shimmy only. (inches) */
-const double K_RobotShimmyRight[E_RobotShimmyRight_ShimmySz] =
-    {-3.0,  //   E_RobotLeftBackwards
-     -3.0,  //   E_RobotRightBackwards
-      3.0,  //   E_RobotLeftForward
-      3.0}; //   E_RobotRightForward
-
-/* K_RobotShimmyLeft: Distance that the robot will shimmy.  For the left shimmy only. (inches) */
-const double K_RobotShimmyLeft[E_RobotShimmyLeft_ShimmySz] =
-    {-3.0,  //   E_RobotLeftBackwards
-     -3.0,  //   E_RobotRightBackwards
-      3.0,  //   E_RobotLeftForward
-      3.0}; //   E_RobotRightForward
+/* K_RobotShimmyTime: Time that the robot will shimmy. (sec) */
+const double K_RobotShimmyTime = 0.1;
