@@ -139,7 +139,7 @@ void Robot::RobotPeriodic() {
         Wait(C_ExeTime);
       } else {
       //Back Lift Pos
-      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * -1; 
+      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition(); //FLIP ME TOO
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
       
       SmartDashboard::PutNumber("LiftPos Back:", Lift_Pos[E_RobotLiftBack]);
@@ -363,20 +363,20 @@ void Robot::RobotPeriodic() {
                             Drive_RPMRaw[E_RobotSideLeft],
                             &Drive_ErrPrev[E_RobotSideLeft],
                             &Drive_IntPrev[E_RobotSideLeft],
-                            0.002, 0.0005, 0.0, //P I D
+                            0.002, 0.0003, 0.00002, //P I D
                             0.7, -0.7,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
-                            0,0,          //D Upper and lower
+                            1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
       Drive_Right = -1 * Control_PID(Drive_Desired[E_RobotSideRight],
                             Drive_RPMRaw[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
-                            0.002, 0.0005, 0.0, //P I D
+                            0.002, 0.0003, 0.00002, //P I D
                             0.7, -0.7,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
-                            0,0,          //D Upper and lower
+                            1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
       SmartDashboard::PutNumber("Drive left:", Drive_Left);
@@ -389,8 +389,8 @@ void Robot::RobotPeriodic() {
       SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
       //Set Motor Output
-      _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
-      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+      // _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
+      // _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
 
       //Tank Drive
 

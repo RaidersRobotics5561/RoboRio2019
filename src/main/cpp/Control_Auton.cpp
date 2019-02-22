@@ -33,7 +33,7 @@ double liftTarget = -15500;
 
 bool AutonLiftToHight(TalonSRX *_talon6, TalonSRX *_talon5)
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * -1;
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition(); //Flip me
     double Lift_ForwardPos = _talon5->GetSelectedSensorPosition() * -1;
 
     SmartDashboard::PutNumber("Lift pos back", Lift_BackPos);
@@ -170,7 +170,7 @@ bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, Tal
 
 bool AutonRaiseBackLift(TalonSRX *_talon6) 
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * -1;
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition(); // FLip ME!!
 
     SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos) * -1; 
 
@@ -224,7 +224,7 @@ bool AutonRaiseForwardLift(TalonSRX *_talon5)
 
 bool MaintainBackLift(TalonSRX *_talon6)
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * -1; 
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition();//FLIP MEE
 
     SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos); 
 
