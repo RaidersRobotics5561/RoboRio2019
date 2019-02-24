@@ -143,7 +143,7 @@ void Robot::RobotPeriodic() {
         Wait(C_ExeTime);
       } else {
       //Back Lift Pos
-      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition(); //FLIP ME TOO
+      Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * K_RobotType; //FLIP ME TOO
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
       
       SmartDashboard::PutNumber("LiftPos Back:", Lift_Pos[E_RobotLiftBack]);
