@@ -96,9 +96,10 @@ void Robot::RobotPeriodic() {
     double Drive_RPMRaw[E_RobotSideSz] = {0,0};
     double Drive_ErrPrev[E_RobotSideSz] = {0,0};
     double Drive_IntPrev[E_RobotSideSz] = {0,0};
+    
+    double Drive_SpeedGain = 0;
+    double Drive_SpeedGain_Min = 0.4;
 
-    double L_axis = 0;
-    double R_axis = 0;
     double LiftOut_Forward = 0;
     double Drive_Left = 0;
     double Drive_Right = 0;
@@ -202,42 +203,16 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
       SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
-	    L_axis = _joy1->GetRawAxis(2);
-      R_axis = _joy1->GetRawAxis(3);
 
-      if(_joy1->GetRawButton(5))
+      if(_joy1->GetRawAxis(3) < Drive_SpeedGain_Min)
       {
-        L_axis = K_RevLimit;
+        Drive_SpeedGain = Drive_SpeedGain_Min;
+      } else {
+        Drive_SpeedGain = _joy1->GetRawAxis(3);
       }
 
-      if(_joy1->GetRawButton(6))
-      {
-        R_axis = K_RevLimit;
-      }
-
-      if(L_axis > K_FwdLimit)
-        {
-        L_axis = K_FwdLimit;
-        }
-
-      if(R_axis > K_FwdLimit)
-        {
-        R_axis = K_FwdLimit;
-        }
-
-      if(L_axis < K_RevLimit)
-        {
-        L_axis = K_RevLimit;
-        }
-
-      if(R_axis < K_RevLimit)
-        {
-        R_axis = K_RevLimit;
-        }
-
-      V_RobotUserCmndPct[E_RobotSideLeft]  = -(_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * K_RotateGain) - L_axis);
-      V_RobotUserCmndPct[E_RobotSideRight] = -(_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain) - R_axis);
-
+      V_RobotUserCmndPct[E_RobotSideLeft] = -((_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
+      V_RobotUserCmndPct[E_RobotSideRight] = -((_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
 
       if (_joy1->GetPOV() == 270)
         {
@@ -373,8 +348,8 @@ void Robot::RobotPeriodic() {
                             Drive_RPMRaw[E_RobotSideLeft],
                             &Drive_ErrPrev[E_RobotSideLeft],
                             &Drive_IntPrev[E_RobotSideLeft],
-                            0.002, 0.0003, 0.00002, //P I D
-                            0.7, -0.7,    //P Upper and lower
+                            0.002, 0.0002, 0.00002, //P I D
+                            0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower
@@ -383,8 +358,8 @@ void Robot::RobotPeriodic() {
                             Drive_RPMRaw[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
-                            0.002, 0.0003, 0.00002, //P I D
-                            0.7, -0.7,    //P Upper and lower
+                            0.002, 0.0002, 0.00002, //P I D
+                            0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower

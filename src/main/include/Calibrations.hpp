@@ -70,7 +70,7 @@ const double K_FwdLimit = 1.0;
 const double K_RevLimit = -0.75;
 
 /* K_RotateGain: Rotation gain for arcade drive. */
-const double K_RotateGain = 0.7;
+const double K_RotateGain = 1;
 
 const double K_RobotShimmySpeed = 160;
 
