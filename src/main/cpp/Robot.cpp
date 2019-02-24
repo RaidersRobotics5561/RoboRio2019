@@ -110,36 +110,49 @@ void Robot::RobotPeriodic() {
     bool Lifted = false;
     bool test = false;
     IsAuton = false;
-    bool autonComp[9] = {false,false,false,false,false,false,false,false,false};
+    bool autonStagesClimb[9] = {false,false,false,false,false,false,false,false,false};
+    bool autonStagesClimbDown[9] = {false,false,false,false,false,false,false,false,false};
     while(IsEnabled() && IsOperatorControl()){
       if(test){
-        double UltraDistance = _UltraFront->GetRangeInches();
+        if(autonStagesClimbDown[0] == false){
+          //Drive forward until F. Ultrasonic is greater than X
+        } else if(autonStagesClimbDown[1] == false) {
+          //Lower Forward Lift to X hight
+        } else if(autonStagesClimbDown[2] == false) {
+          //Drive Lift Wheel until B. Ultrasonic is greater than X
+        } else if(autonStagesClimbDown[3] == false) {
+          //Lower Back Lift to X hight
+        } else if(autonStagesClimbDown[4] == false) {
+          //Raise both lifts to hight
+        } else if(autonStagesClimbDown[4] == true) {
+          //Stop auton
+        }
 
-        SmartDashboard::PutNumber("UltraDistance", UltraDistance);
+
         Wait(C_ExeTime);
       }else if(IsAuton){
-        if(autonComp[0] == false){
-          autonComp[0] = AutonLiftToHight(_talon6, _talon5);
-        } else if(autonComp[1] == false) {
-          autonComp[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
+        if(autonStagesClimb[0] == false){
+          autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5);
+        } else if(autonStagesClimb[1] == false) {
+          autonStagesClimb[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
           MaintainBackLift(_talon6);
           MaintainForwardLift(_talon5);
-        } else if(autonComp[2] == false) {
-          autonComp[2] = AutonRaiseForwardLift(_talon5);
+        } else if(autonStagesClimb[2] == false) {
+          autonStagesClimb[2] = AutonRaiseForwardLift(_talon5);
           MaintainBackLift(_talon6);
-        } else if(autonComp[3] == false) {
-          autonComp[3] = AutonMainDrive(_talon1,_talon2,_talon3,_talon4,_UltraBack);
+        } else if(autonStagesClimb[3] == false) {
+          autonStagesClimb[3] = AutonMainDrive(_talon1,_talon2,_talon3,_talon4,_UltraBack);
           MaintainBackLift(_talon6);
-        } else if(autonComp[4] == false) {
-          autonComp[4] = AutonRaiseBackLift(_talon6);
-        }  else if(autonComp[4] == true){
+        } else if(autonStagesClimb[4] == false) {
+          autonStagesClimb[4] = AutonRaiseBackLift(_talon6);
+        }  else if(autonStagesClimb[4] == true){
           IsAuton = false;
         }
-        SmartDashboard::PutBoolean("Step 0", autonComp[0]);
-        SmartDashboard::PutBoolean("Step 1", autonComp[1]);
-        SmartDashboard::PutBoolean("Step 2", autonComp[2]);
-        SmartDashboard::PutBoolean("Step 3", autonComp[3]);
-        SmartDashboard::PutBoolean("Step 4", autonComp[4]);
+        SmartDashboard::PutBoolean("Step 0", autonStagesClimb[0]);
+        SmartDashboard::PutBoolean("Step 1", autonStagesClimb[1]);
+        SmartDashboard::PutBoolean("Step 2", autonStagesClimb[2]);
+        SmartDashboard::PutBoolean("Step 3", autonStagesClimb[3]);
+        SmartDashboard::PutBoolean("Step 4", autonStagesClimb[4]);
         Wait(C_ExeTime);
       } else {
       //Back Lift Pos
@@ -375,7 +388,7 @@ void Robot::RobotPeriodic() {
 
       //Set Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
-      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
 
       //Tank Drive
 

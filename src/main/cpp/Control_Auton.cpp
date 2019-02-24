@@ -33,7 +33,7 @@ double liftTarget = -15500;
 
 bool AutonLiftToHight(TalonSRX *_talon6, TalonSRX *_talon5)
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType; //Flip me
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType;
     double Lift_ForwardPos = _talon5->GetSelectedSensorPosition() * -1;
 
     SmartDashboard::PutNumber("Lift pos back", Lift_BackPos);
@@ -86,7 +86,7 @@ bool AutonLiftToHight(TalonSRX *_talon6, TalonSRX *_talon5)
     SmartDashboard::PutNumber("P RIGHT", 0.0002 * AutonPID_P[E_RobotLiftBack]);
     
     if(Lift_BackPos > liftTarget){
-        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
     } else {
         _talon6->Set(ControlMode::PercentOutput, 0);
     }
@@ -170,7 +170,7 @@ bool AutonMainDrive(TalonSRX *_talon1, TalonSRX *_talon2, TalonSRX *_talon3, Tal
 
 bool AutonRaiseBackLift(TalonSRX *_talon6) 
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType; // FLip ME!!
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType;
 
     SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos) * -1; 
 
@@ -190,7 +190,7 @@ bool AutonRaiseBackLift(TalonSRX *_talon6)
         _talon6->Set(ControlMode::PercentOutput, 0);
         return true;
     } else {
-        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
         return false;
     }
 }
@@ -222,9 +222,36 @@ bool AutonRaiseForwardLift(TalonSRX *_talon5)
     }
 }
 
+bool AutonMoveBackLift(TalonSRX *_talon6) 
+{
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType;
+
+    SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos) * -1; 
+
+    double Lift_Desired = 0;
+    double LiftOut_Backward = Control_PID(Lift_Desired,
+                            Lift_BackPos,
+                            &Lift_ErrPrev[E_RobotLiftBack], 
+                            &Lift_IntPrev[E_RobotLiftBack],
+                            0.005, 0.0, 0.0, //P I D 
+                            1, -1,    //P Upper and lower
+                            1.0, -0.1,    //I Upper and lower
+                            0,0,          //D Upper and lower
+                            1, -1); //Out Upper and lower
+
+    if(Lift_BackPos >= -150)
+    {
+        _talon6->Set(ControlMode::PercentOutput, 0);
+        return true;
+    } else {
+        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+        return false;
+    }
+}
+
 bool MaintainBackLift(TalonSRX *_talon6)
 {
-    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType;//FLIP MEE
+    double Lift_BackPos = _talon6->GetSelectedSensorPosition() * K_RobotType;
 
     SmartDashboard::PutNumber("Lift pos Back", Lift_BackPos); 
 
@@ -239,7 +266,7 @@ bool MaintainBackLift(TalonSRX *_talon6)
                             0,0,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
-    _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
+    _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
 }
 
 bool MaintainForwardLift(TalonSRX *_talon5)

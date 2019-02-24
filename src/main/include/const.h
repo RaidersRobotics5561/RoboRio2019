@@ -17,6 +17,5 @@ const double C_ExeTime = 0.01;
 const int K_TimeoutMs = 10;
 const double K_WheelPulseToRev = 4100;
 
-
 // K_RobotType: For practice bot, set to 1.  For Comp, set to -1.
 const double K_RobotType = 1.0;
