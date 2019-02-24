@@ -86,7 +86,7 @@ bool AutonLiftToHight(TalonSRX *_talon6, TalonSRX *_talon5)
     SmartDashboard::PutNumber("P RIGHT", 0.0002 * AutonPID_P[E_RobotLiftBack]);
     
     if(Lift_BackPos > liftTarget){
-        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
     } else {
         _talon6->Set(ControlMode::PercentOutput, 0);
     }
@@ -190,7 +190,7 @@ bool AutonRaiseBackLift(TalonSRX *_talon6)
         _talon6->Set(ControlMode::PercentOutput, 0);
         return true;
     } else {
-        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+        _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
         return false;
     }
 }
@@ -239,7 +239,7 @@ bool MaintainBackLift(TalonSRX *_talon6)
                             0,0,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
-    _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+    _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
 }
 
 bool MaintainForwardLift(TalonSRX *_talon5)

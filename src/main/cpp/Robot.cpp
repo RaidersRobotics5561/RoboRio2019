@@ -108,6 +108,7 @@ void Robot::RobotPeriodic() {
     int AutonStep = 0;
     bool Lifted = false;
     bool test = false;
+    IsAuton = false;
     bool autonComp[9] = {false,false,false,false,false,false,false,false,false};
     while(IsEnabled() && IsOperatorControl()){
       if(test){
@@ -130,7 +131,9 @@ void Robot::RobotPeriodic() {
           MaintainBackLift(_talon6);
         } else if(autonComp[4] == false) {
           autonComp[4] = AutonRaiseBackLift(_talon6);
-        }    
+        }  else if(autonComp[4] == true){
+          IsAuton = false;
+        }
         SmartDashboard::PutBoolean("Step 0", autonComp[0]);
         SmartDashboard::PutBoolean("Step 1", autonComp[1]);
         SmartDashboard::PutBoolean("Step 2", autonComp[2]);
@@ -172,7 +175,14 @@ void Robot::RobotPeriodic() {
         DesiredPos_Backward += 100;
         DesiredPos_Forward += 100;
       }
-
+      //up
+      if(_joy2->GetPOV() == 0){
+        DesiredPos_Forward -= 100;
+      }
+      //down
+      if(_joy2->GetPOV() == 180){
+        DesiredPos_Backward -= 100;
+      }
       //DesiredPos Limit
       if (DesiredPos_Backward < -15500.0){
         DesiredPos_Backward = -15500.0;
@@ -389,8 +399,8 @@ void Robot::RobotPeriodic() {
       SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
       //Set Motor Output
-      // _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
-      // _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * -1);
+      _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
+      _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward);
 
       //Tank Drive
 
@@ -402,8 +412,19 @@ void Robot::RobotPeriodic() {
       _talon4->Set(ControlMode::PercentOutput, Drive_Right);
 
 
-      if(_joy2->GetPOV() == 90){
-        _spark1->Set(1);
+      // if(_joy2->GetPOV() == 90){
+      //   _spark1->Set(1);
+      // } else if(_joy2->GetPOV() == 270) {
+      //   _spark1->Set(-1);
+      // }
+      // else {
+      //   _spark1->Set(0);
+      // }
+
+       if(_joy2->GetRawAxis(0)  > 0.05){
+        _spark1->Set(_joy2->GetRawAxis(0));
+      } else if(_joy2->GetRawAxis(0)  < -0.05){
+        _spark1->Set(_joy2->GetRawAxis(0) * -1);
       } else {
         _spark1->Set(0);
       }

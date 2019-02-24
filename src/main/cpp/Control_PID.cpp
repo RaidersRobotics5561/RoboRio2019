@@ -2,11 +2,11 @@
 #include "Calibrations.hpp"
 #include "LookUp.hpp"
 
-double K_LukeStopperRamp = 40;
-double K_LukeStopperRampLow = 25;
+double K_LukeStopperRamp = 60;
+double K_LukeStopperRampLow = 40;
 double K_LukeStopperThreashold = 75;
 
-double K_LukeStopperMaxDelta = 40;
+double K_LukeStopperMaxDelta = 60;
 
 double Control_PID(double  L_DesiredSpeed,
                    double  L_CurrentSpeed,
