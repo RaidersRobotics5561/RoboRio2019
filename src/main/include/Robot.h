@@ -12,6 +12,7 @@
 #include "const.h"
 #include "Control_Pid.h"
 #include "Control_Auton.h"
+#include <frc/DigitalOutput.h>
 
 class Robot : public frc::IterativeRobot {
  public:
@@ -27,6 +28,7 @@ class Robot : public frc::IterativeRobot {
   double Lift_Pos[E_RobotLiftSz];
  
   bool IsAuton = false;
+  bool IsAutonDwn = false;
 
   double DesiredPos_Backward = 0; 
   double DesiredPos_Forward = 0; 
@@ -52,4 +54,9 @@ class Robot : public frc::IterativeRobot {
 
   Ultrasonic *_UltraFront;
   Ultrasonic *_UltraBack;
+
+	DigitalOutput *V_LED_State0 = new DigitalOutput(6);
+	DigitalOutput *V_LED_State1 = new DigitalOutput(7);
+	DigitalOutput *V_LED_State2 = new DigitalOutput(8);
+	DigitalOutput *V_LED_State3 = new DigitalOutput(9);
 };

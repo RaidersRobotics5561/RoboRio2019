@@ -7,21 +7,27 @@
 
 #include "Control_Pid.h"
 #include "Calibrations.hpp"
-#include <frc/Driverstation.h>
+
 
 using namespace frc;
 
-double             V_RobotShimmyRightTime;
-double             V_RobotShimmyLeftTime;
 double             V_SwingScale;
 T_RobotShimmyLeft  V_RobotShimmyLeft;
 T_RobotShimmyRight V_RobotShimmyRight;
 
+T_RoboState V_RobotState;
+
+void UpdateLED_Output(T_RoboState    L_RobotState,
+                      bool           L_DriverOverride,
+                      DigitalOutput *L_LED_State0,
+                      DigitalOutput *L_LED_State1,
+                      DigitalOutput *L_LED_State2,
+                      DigitalOutput *L_LED_State3);
+
 void Robot::RobotInit() {
-  V_RobotShimmyRightTime  = 0.0;
-  V_RobotShimmyLeftTime   = 0.0;
+  V_RobotState = E_Init;
   V_SwingScale = 0.75;
-  V_RobotShimmyLeft  = E_RobotShimmyLeft_RightBackwards;
+  V_RobotShimmyLeft  = E_RobotShimmyLeft_ShimmySz;
   V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
 
   	_talon6->ConfigSelectedFeedbackSensor(
@@ -92,6 +98,8 @@ void Robot::RobotPeriodic() {
     DesiredPos_Backward = 0;
     DesiredPos_Forward = 0;
 
+    V_RobotState = E_Teleop;
+
     double Drive_Desired[E_RobotSideSz] = {0,0};
     double Drive_RPMRaw[E_RobotSideSz] = {0,0};
     double Drive_ErrPrev[E_RobotSideSz] = {0,0};
@@ -106,47 +114,81 @@ void Robot::RobotPeriodic() {
     double V_RobotUserCmndPct[E_RobotSideSz] = {0,0};
     double LiftOut_Backward = 0;
 
+    double V_RobotShimmyDistance = 0;
+    bool   V_RobotShimmyLeftInProcess  = false;
+    bool   V_RobotShimmyRightInProcess = false;
+    bool   V_RobotShimmyStop           = false;
+    bool   L_Test = false;
+    double L_OpenLoopTimer = 0;
+
     int AutonStep = 0;
-    bool Lifted = false;
-    bool test = false;
+    bool test = true;
     IsAuton = false;
+    IsAutonDwn = false;
     bool autonStagesClimb[9] = {false,false,false,false,false,false,false,false,false};
     bool autonStagesClimbDown[9] = {false,false,false,false,false,false,false,false,false};
     while(IsEnabled() && IsOperatorControl()){
-      if(test){
+    
+    /* Let's update the LED ligts here so that it will always run, regardless of in auto mode or in driver mode. */
+    UpdateLED_Output(V_RobotState,
+                     _joy1->GetRawButton(1),
+                     V_LED_State0,
+                     V_LED_State1,
+                     V_LED_State2,
+                     V_LED_State3);
+
+      if(IsAutonDwn){
         if(autonStagesClimbDown[0] == false){
-          //Drive forward until F. Ultrasonic is greater than X
+          autonStagesClimbDown[0] = AutonDropBackLift(_talon6, -5500.0, -5500);
         } else if(autonStagesClimbDown[1] == false) {
-          //Lower Forward Lift to X hight
+          MaintainBackLift(_talon6, -5500);
+          autonStagesClimbDown[1] = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, -50);
         } else if(autonStagesClimbDown[2] == false) {
+          MaintainBackLift(_talon6, -5500);
+          L_Test = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, 0);
+          autonStagesClimbDown[2] = AutonRaiseForwardDrop(_talon5, -5500.0, -5500);
           //Drive Lift Wheel until B. Ultrasonic is greater than X
         } else if(autonStagesClimbDown[3] == false) {
+          MaintainBackLift(_talon6, -5500);
+          MaintainForwardLift(_talon5, -5500);
+          L_OpenLoopTimer += C_ExeTime;
+          autonStagesClimbDown[3] = AutonDriveLiftWheelOpenLoop(_spark1, L_OpenLoopTimer);
           //Lower Back Lift to X hight
         } else if(autonStagesClimbDown[4] == false) {
+          autonStagesClimbDown[4] = AutonDropToHight(_talon6, _talon5, 0);
           //Raise both lifts to hight
         } else if(autonStagesClimbDown[4] == true) {
+          IsAutonDwn = false;
           //Stop auton
         }
-
-
         Wait(C_ExeTime);
       }else if(IsAuton){
         if(autonStagesClimb[0] == false){
-          autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5);
+          autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5, -15500);
+          V_RobotState = E_AutonEndGame1;
         } else if(autonStagesClimb[1] == false) {
           autonStagesClimb[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
-          MaintainBackLift(_talon6);
-          MaintainForwardLift(_talon5);
+          MaintainBackLift(_talon6, -15500);
+          MaintainForwardLift(_talon5, -15500);
+          V_RobotState = E_AutonEndGame2;
         } else if(autonStagesClimb[2] == false) {
-          autonStagesClimb[2] = AutonRaiseForwardLift(_talon5);
-          MaintainBackLift(_talon6);
+          autonStagesClimb[2] = AutonRaiseForwardLift(_talon5, 0.0);
+          MaintainBackLift(_talon6, -15500);
+          _talon1->Set(ControlMode::PercentOutput, 0.1);
+          _talon2->Set(ControlMode::PercentOutput, 0.1);
+          _talon3->Set(ControlMode::PercentOutput, -0.1);
+          _talon4->Set(ControlMode::PercentOutput, -0.1);
+          V_RobotState = E_AutonEndGame3;
         } else if(autonStagesClimb[3] == false) {
           autonStagesClimb[3] = AutonMainDrive(_talon1,_talon2,_talon3,_talon4,_UltraBack);
-          MaintainBackLift(_talon6);
+          MaintainBackLift(_talon6, -15500);
+          V_RobotState = E_AutonEndGame4;
         } else if(autonStagesClimb[4] == false) {
-          autonStagesClimb[4] = AutonRaiseBackLift(_talon6);
-        }  else if(autonStagesClimb[4] == true){
+          autonStagesClimb[4] = AutonRaiseBackLift(_talon6, 0.0, -150);
+          V_RobotState = E_AutonEndGame5;
+        }  else if(autonStagesClimb[4] == true) {
           IsAuton = false;
+          V_RobotState = E_Teleop;
         }
         SmartDashboard::PutBoolean("Step 0", autonStagesClimb[0]);
         SmartDashboard::PutBoolean("Step 1", autonStagesClimb[1]);
@@ -155,6 +197,8 @@ void Robot::RobotPeriodic() {
         SmartDashboard::PutBoolean("Step 4", autonStagesClimb[4]);
         Wait(C_ExeTime);
       } else {
+      V_RobotState = E_Teleop;
+
       //Back Lift Pos
       Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * K_RobotType; //FLIP ME TOO
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
@@ -227,35 +271,30 @@ void Robot::RobotPeriodic() {
       V_RobotUserCmndPct[E_RobotSideLeft] = -((_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
       V_RobotUserCmndPct[E_RobotSideRight] = -((_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
 
-      if (_joy1->GetPOV() == 270)
+      if ((_joy1->GetPOV() == 270) ||
+          (V_RobotShimmyLeftInProcess == true))
         {
         /* Shimmy to the left: */
-        if ((V_RobotShimmyLeftTime < K_RobotShimmyTime) &&
-            (V_RobotShimmyLeft < E_RobotShimmyLeft_ShimmySz))
+        V_RobotShimmyLeftInProcess = true;
+        if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
           {
-          V_RobotShimmyLeftTime += C_ExeTime;
-          }
-        else
-          {
-          V_RobotShimmyLeft = T_RobotShimmyLeft(int(V_RobotShimmyLeft) + 1);
-          V_RobotShimmyLeftTime = 0;
-          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
-            {
-            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-            }
+          V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
           }
 
-        if ((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
-            (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward))
+        if (((V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards) ||
+             (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward)) &&
+            (V_RobotShimmyStop == false))
           {
           Drive_Desired[E_RobotSideLeft] = 0.0;
           if (V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards)
             {
             Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(double(_talon4->GetSelectedSensorPosition()));
             }
           else
             {
             Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(double(_talon4->GetSelectedSensorPosition()));
             }
           }
         else
@@ -264,29 +303,47 @@ void Robot::RobotPeriodic() {
           if (V_RobotShimmyLeft == E_RobotShimmyLeft_LeftBackwards)
             {
             Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
             }
           else
             {
             Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
+            }
+          }
+
+        if ((V_RobotShimmyDistance >= K_RobotShimmyDistance) ||
+            (V_RobotShimmyStop == true))
+          {
+          V_RobotShimmyStop = true;
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          Drive_Desired[E_RobotSideLeft]  = 0.0;
+
+          if ((fabs(Drive_RPMRaw[E_RobotSideRight]) < 40.0) &&
+              (fabs(Drive_RPMRaw[E_RobotSideLeft]) < 40.0))
+            {
+            V_RobotShimmyStop = false;
+            V_RobotShimmyLeft = T_RobotShimmyLeft(int(V_RobotShimmyLeft) + 1);
+            _talon2->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+            _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+            V_RobotShimmyDistance = 0;
+            }
+
+          if (V_RobotShimmyLeft >= E_RobotShimmyLeft_ShimmySz)
+            {
+            V_RobotShimmyLeftInProcess = false;
+            V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
             }
           }
         }
-      else if (_joy1->GetPOV() == 90)
+      else if ((_joy1->GetPOV() == 90) ||
+               (V_RobotShimmyRightInProcess == true))
         {
         /* Shimmy to the right: */
-        if ((V_RobotShimmyRightTime < K_RobotShimmyTime) &&
-            (V_RobotShimmyRight < E_RobotShimmyRight_ShimmySz))
+        V_RobotShimmyRightInProcess = true;
+        if (V_RobotShimmyRight >= E_RobotShimmyRight_ShimmySz)
           {
-          V_RobotShimmyRightTime += C_ExeTime;
-          }
-        else
-          {
-          V_RobotShimmyRight = T_RobotShimmyRight(int(V_RobotShimmyRight) + 1);
-          V_RobotShimmyRightTime = 0;
-          if (V_RobotShimmyRight >= E_RobotShimmyRight_ShimmySz)
-            {
-            V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
-            }
+          V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
           }
 
         if ((V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards) ||
@@ -296,10 +353,12 @@ void Robot::RobotPeriodic() {
           if (V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards)
             {
             Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(_talon2->GetSelectedSensorPosition());
             }
           else
             {
             Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(_talon2->GetSelectedSensorPosition());
             }
           }
         else
@@ -308,31 +367,35 @@ void Robot::RobotPeriodic() {
           if (V_RobotShimmyRight == E_RobotShimmyRight_RightBackwards)
             {
             Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(_talon4->GetSelectedSensorPosition());
             }
           else
             {
             Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            V_RobotShimmyDistance = fabs(_talon4->GetSelectedSensorPosition());
+            }
+          }
+
+        if (V_RobotShimmyDistance >= K_RobotShimmyDistance)
+          {
+          V_RobotShimmyRight = T_RobotShimmyRight(int(V_RobotShimmyRight) + 1);
+          V_RobotShimmyDistance = 0;
+          Drive_Desired[E_RobotSideRight] = 0.0;
+          Drive_Desired[E_RobotSideLeft]  = 0.0;
+          _talon2->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+          _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+          if (V_RobotShimmyRight >= E_RobotShimmyRight_ShimmySz)
+            {
+            V_RobotShimmyRightInProcess = false;
+            V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
             }
           }
         }
-      else if(Lift_Pos[E_RobotLiftBack] < -75 || Lift_Pos[E_RobotLiftForward] < -75 || Lifted)
-        {
-        V_RobotShimmyRightTime  = 0.0;
-        V_RobotShimmyLeftTime   = 0.0;
-        V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-        V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
-        Lifted = true;
-        Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
-        Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
-        }
       else
         {
-        V_RobotShimmyRightTime  = 0.0;
-        V_RobotShimmyLeftTime   = 0.0;
-        V_RobotShimmyLeft = E_RobotShimmyLeft_RightBackwards;
-        V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
         Drive_Desired[E_RobotSideLeft] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideLeft], Drive_RPMRaw[E_RobotSideLeft]);
         Drive_Desired[E_RobotSideRight] = DesiredSpeed(V_RobotUserCmndPct[E_RobotSideRight], Drive_RPMRaw[E_RobotSideRight]);
+        V_RobotShimmyLeft = E_RobotShimmyLeft_ShimmySz;
         }
 
 
@@ -377,6 +440,8 @@ void Robot::RobotPeriodic() {
                             1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower
 
+
+      SmartDashboard::PutNumber("Shimmy Distance:", V_RobotShimmyDistance);
       SmartDashboard::PutNumber("Drive left:", Drive_Left);
       SmartDashboard::PutNumber("Drive right:", Drive_Right);
       SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
@@ -386,28 +451,17 @@ void Robot::RobotPeriodic() {
 
       SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
-      //Set Motor Output
+      //Set Lift Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
       _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
 
       //Tank Drive
-
-
       _talon1->Set(ControlMode::PercentOutput, Drive_Left);
       _talon2->Set(ControlMode::PercentOutput, Drive_Left);
 
       _talon3->Set(ControlMode::PercentOutput, Drive_Right);
       _talon4->Set(ControlMode::PercentOutput, Drive_Right);
 
-
-      // if(_joy2->GetPOV() == 90){
-      //   _spark1->Set(1);
-      // } else if(_joy2->GetPOV() == 270) {
-      //   _spark1->Set(-1);
-      // }
-      // else {
-      //   _spark1->Set(0);
-      // }
 
        if(_joy2->GetRawAxis(0)  > 0.05){
         _spark1->Set(_joy2->GetRawAxis(0));
@@ -425,14 +479,6 @@ void Robot::RobotPeriodic() {
         _spark2->Set((_joy2->GetRawAxis(2) * V_SwingScale) * -1);
       }
 
-      // if(_joy2->GetPOV() == 0){
-      //   _spark2->Set(0.75);
-      // } else if(_joy2->GetPOV() == 180){
-      //   _spark2->Set(-0.5);
-      // } else {
-      //   _spark2->Set(0);
-      // }
-
       if(_joy2->GetRawButton(5)){
         _spark3->Set(0.5);
       } else if(_joy2->GetRawButton(6)){
@@ -444,6 +490,11 @@ void Robot::RobotPeriodic() {
       if(_joy1->GetRawButton(8))
       {
         IsAuton = true;
+      }
+
+      if(_joy1->GetRawButton(1))
+      {
+        IsAutonDwn = true;
       }
 
       if(DriverStation::GetInstance().IsBrownedOut())

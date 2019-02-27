@@ -1,5 +1,9 @@
 #include "Robot.h"
+#include <frc/Driverstation.h>
 
+/* K_DesiredDriveSpeed: Look up table used for telop driving.  This is 
+ referenced relative to the joystick axis and also uses 
+ K_DesiredDriveSpeedAxis as the axis lookup. (RPM) */
 const double K_DesiredDriveSpeed[20] = {-300,  //-0.95
                                         -223.125,  //-0.85
                                          -168.75, //-0.75
@@ -21,27 +25,8 @@ const double K_DesiredDriveSpeed[20] = {-300,  //-0.95
                                          223.125,  // 0.85
                                          300.00}; // 0.95
 
-const double K_DesiredDriveSpeedLifted[20] = {-37.5,  //-0.95
-                                        -27.9,  //-0.85
-                                         -21, //-0.75
-                                         -14,//-0.65
-                                         -9,  //-0.55
-                                         -7, //-0.45
-                                         -4.7,  //-0.35
-                                          -2.3,  //-0.25
-                                          -0.6,  //-0.15
-                                           0.00,  //-0.10
-                                           0.00,  // 0.10
-                                           0.6,  // 0.15
-                                           2.3,  // 0.25
-                                          4.7,  // 0.35
-                                          7,  // 0.45
-                                          9,  // 0.55
-                                          14,  // 0.65
-                                          21,  // 0.75
-                                         27.9,  // 0.85B
-                                         37.5}; // 0.95
-
+/* K_DesiredDriveSpeedAxis: Look up table axis for desired drive speed 
+ K_DesiredDriveSpeed. (PCT) */
 const double K_DesiredDriveSpeedAxis[20] = {-0.95,
                                             -0.85,
                                             -0.75,
@@ -63,15 +48,18 @@ const double K_DesiredDriveSpeedAxis[20] = {-0.95,
                                              0.85,
                                              0.95};
 
-/* K_FwdLimit: Forward limit for tank drive. */
-const double K_FwdLimit = 1.0;
-
-/* K_RevLimit: Reverse limit for tank drive. */
-const double K_RevLimit = -0.75;
-
 /* K_RotateGain: Rotation gain for arcade drive. */
 const double K_RotateGain = 1;
 
-const double K_RobotShimmySpeed = 160;
+/* K_RobotShimmySpeed: This is the desired wheel speed for one side of the robot during shimmy. (RPM)*/
+const double K_RobotShimmySpeed = 120;
 
-const double K_RobotShimmyTime = 0.1;
+/* K_RobotShimmyDistance: This is the amount of measured distance that the robot will rotate during one of the shimmys. (???)*/
+const double K_RobotShimmyDistance = 1200;
+
+/* K_EndMatchWarningTime: This is the amount of time till the end of the game at which the LED lights will begin to
+                          indicate to the driver that the game is about to end.  Typically this is 30 seconds. (seconds)*/
+const double K_EndMatchWarningTime  =  30.0;
+
+/* K_SandStormTime: This is the amount of time in sand storm. (seconds)*/
+const double K_SandStormTime  =  120.0;
