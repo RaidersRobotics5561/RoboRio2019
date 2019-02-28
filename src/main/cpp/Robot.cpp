@@ -307,29 +307,31 @@ void Robot::RobotPeriodic() {
              (V_RobotShimmyLeft == E_RobotShimmyLeft_RightForward)) &&
             (V_RobotShimmyStop == false))
           {
-          Drive_Desired[E_RobotSideLeft] = 0.0;
           if (V_RobotShimmyLeft == E_RobotShimmyLeft_RightBackwards)
             {
-            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideLeft]  = -K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(double(_talon4->GetSelectedSensorPosition()));
             }
           else
             {
-            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideLeft]  = K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(double(_talon4->GetSelectedSensorPosition()));
             }
           }
         else
           {
-          Drive_Desired[E_RobotSideRight] = 0.0;
           if (V_RobotShimmyLeft == E_RobotShimmyLeft_LeftBackwards)
             {
-            Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideLeft]  = -K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
             }
           else
             {
-            Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideLeft]  = K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
             }
           }
@@ -341,8 +343,8 @@ void Robot::RobotPeriodic() {
           Drive_Desired[E_RobotSideRight] = 0.0;
           Drive_Desired[E_RobotSideLeft]  = 0.0;
 
-          if ((fabs(Drive_RPMRaw[E_RobotSideRight]) < 40.0) &&
-              (fabs(Drive_RPMRaw[E_RobotSideLeft]) < 40.0))
+          if ((fabs(Drive_RPMRaw[E_RobotSideRight]) < K_RobotShimmySpeedEnd) &&
+              (fabs(Drive_RPMRaw[E_RobotSideLeft])  < K_RobotShimmySpeedEnd))
             {
             V_RobotShimmyStop = false;
             V_RobotShimmyLeft = T_RobotShimmyLeft(int(V_RobotShimmyLeft) + 1);
@@ -368,44 +370,56 @@ void Robot::RobotPeriodic() {
           V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
           }
 
-        if ((V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards) ||
-            (V_RobotShimmyRight == E_RobotShimmyRight_LeftForward))
+        if (((V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards) ||
+             (V_RobotShimmyRight == E_RobotShimmyRight_LeftForward)) &&
+            (V_RobotShimmyStop == false))
           {
-          Drive_Desired[E_RobotSideRight] = 0.0;
           if (V_RobotShimmyRight == E_RobotShimmyRight_LeftBackwards)
             {
-            Drive_Desired[E_RobotSideLeft] = -K_RobotShimmySpeed;
-            V_RobotShimmyDistance = fabs(_talon2->GetSelectedSensorPosition());
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideLeft]  = -K_RobotShimmySpeedMax;
+            V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
             }
           else
             {
-            Drive_Desired[E_RobotSideLeft] = K_RobotShimmySpeed;
-            V_RobotShimmyDistance = fabs(_talon2->GetSelectedSensorPosition());
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideLeft]  = K_RobotShimmySpeedMax;
+            V_RobotShimmyDistance = fabs(double(_talon2->GetSelectedSensorPosition()));
             }
           }
         else
           {
-          Drive_Desired[E_RobotSideLeft] = 0.0;
           if (V_RobotShimmyRight == E_RobotShimmyRight_RightBackwards)
             {
-            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideLeft]  = -K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideRight] = -K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(_talon4->GetSelectedSensorPosition());
             }
           else
             {
-            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeed;
+            Drive_Desired[E_RobotSideLeft]  = K_RobotShimmySpeedMin;
+            Drive_Desired[E_RobotSideRight] = K_RobotShimmySpeedMax;
             V_RobotShimmyDistance = fabs(_talon4->GetSelectedSensorPosition());
             }
           }
 
-        if (V_RobotShimmyDistance >= K_RobotShimmyDistance)
+        if ((V_RobotShimmyDistance >= K_RobotShimmyDistance) ||
+            (V_RobotShimmyStop == true))
           {
-          V_RobotShimmyRight = T_RobotShimmyRight(int(V_RobotShimmyRight) + 1);
-          V_RobotShimmyDistance = 0;
+          V_RobotShimmyStop = true;
           Drive_Desired[E_RobotSideRight] = 0.0;
           Drive_Desired[E_RobotSideLeft]  = 0.0;
-          _talon2->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
-          _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+
+          if ((fabs(Drive_RPMRaw[E_RobotSideRight]) < K_RobotShimmySpeedEnd) &&
+              (fabs(Drive_RPMRaw[E_RobotSideLeft])  < K_RobotShimmySpeedEnd))
+            {
+            V_RobotShimmyStop = false;
+            V_RobotShimmyRight = T_RobotShimmyRight(int(V_RobotShimmyRight) + 1);
+            _talon2->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+            _talon4->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
+            V_RobotShimmyDistance = 0;
+            }
+
           if (V_RobotShimmyRight >= E_RobotShimmyRight_ShimmySz)
             {
             V_RobotShimmyRightInProcess = false;

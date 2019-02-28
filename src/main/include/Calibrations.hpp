@@ -51,8 +51,14 @@ const double K_DesiredDriveSpeedAxis[20] = {-0.95,
 /* K_RotateGain: Rotation gain for arcade drive. */
 const double K_RotateGain = 1;
 
-/* K_RobotShimmySpeed: This is the desired wheel speed for one side of the robot during shimmy. (RPM)*/
-const double K_RobotShimmySpeed = 120;
+/* K_RobotShimmySpeedMax: This is the desired wheel speed for the main drive side the robot during shimmy. (RPM)*/
+const double K_RobotShimmySpeedMax = 120;
+
+/* K_RobotShimmySpeedMin: This is the desired wheel speed for the secondary drive side the robot during shimmy. (RPM)*/
+const double K_RobotShimmySpeedMin = 20;
+
+/* K_RobotShimmySpeedEnd: This is the measured wheel speed below which we will transition to the next shimmy. (RPM)*/
+const double K_RobotShimmySpeedEnd = 40;
 
 /* K_RobotShimmyDistance: This is the amount of measured distance that the robot will rotate during one of the shimmys. (???)*/
 const double K_RobotShimmyDistance = 1200;
