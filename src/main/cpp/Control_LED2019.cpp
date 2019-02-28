@@ -22,7 +22,7 @@
  *
  *                * Chan0 * Chan1 * Chan2 * Chan3 *
  *                    0       0       0       0      * Mode0 * - Default no comm
- *                    0       0       1       1      * Mode1 * - Com, but disabled
+ *                    0       0       0       1      * Mode1 * - Com, but disabled
  *                    0       1       0       0      * Mode2 * - Com, Rio and Pi
  *                    0       1       1       1      * Mode3 * - Sandstorm, Red Alliance
  *                    1       0       0       0      * Mode4 * - Sandstorm, Blue Alliance
@@ -51,21 +51,18 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
   bool L_Pin3            = false;
   LED_Mode L_LED_Mode    = LED_Mode0;
   double L_MatchTime     = DriverStation::GetInstance().GetMatchTime();
-
-  DriverStation::Alliance L_AllianceColor;
-
-  L_AllianceColor = DriverStation::GetInstance().GetAlliance();
+  DriverStation::Alliance L_AllianceColor = DriverStation::GetInstance().GetAlliance();
 
   if (L_MatchTime < K_EndMatchWarningTime &&
       L_RobotState == E_Teleop)
     {
-        L_LED_Mode = LED_Mode2;
+      L_LED_Mode = LED_Mode2;
     }
 
   if (L_DriverOverride == true)
     {
     /* Allow the driver to always override the current LED mode. */
-      L_LED_Mode = LED_Mode11;
+      L_LED_Mode = LED_Mode7;
     }
   else if ((L_RobotState == E_Teleop) &&
            (L_AllianceColor != DriverStation::Alliance::kInvalid))
@@ -97,13 +94,13 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
     {
       L_LED_Mode = LED_Mode8;
     }
-  else if (L_RobotState == E_AutonEndGame2)
+  else if ((L_RobotState == E_AutonEndGame2) || 
+           (L_RobotState == E_AutonEndGame3) ||
+           (L_RobotState == E_AutonEndGame4))
     {
       L_LED_Mode = LED_Mode9;
     }
-  else if ((L_RobotState == E_AutonEndGame3) ||
-           (L_RobotState == E_AutonEndGame4) ||
-           (L_RobotState == E_AutonEndGame5))
+  else if (L_RobotState == E_AutonEndGame5)
     {
       L_LED_Mode = LED_Mode10;
     }
@@ -174,7 +171,7 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
       default:
         L_Pin0 = false; L_Pin1 = false; L_Pin2 = false; L_Pin3 = false;
         break;
-  }
+    }
 
 
   // Output to the DIO pins:

@@ -61,5 +61,13 @@ const double K_RobotShimmyDistance = 1200;
                           indicate to the driver that the game is about to end.  Typically this is 30 seconds. (seconds)*/
 const double K_EndMatchWarningTime  =  30.0;
 
-/* K_SandStormTime: This is the amount of time in sand storm. (seconds)*/
-const double K_SandStormTime  =  120.0;
+/* K_SandStormTime: The game timer should start at a max time of 150 seconds and then count down.
+                    This is the threshold at which "sandstorm" is exited. (seconds)*/
+const double K_SandStormTime  =  135.0;
+
+/* K_LiftHeightStage2: This is the lift height of stage 2. (encoder counts?)*/
+const double K_LiftHeightStage2  =  -5500.0;
+
+/* K_LiftHeightStage3: This is the lift height of stage 3. (encoder counts?)*/
+const double K_LiftHeightStage3  =  -15500.0;
+

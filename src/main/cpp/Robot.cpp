@@ -87,6 +87,13 @@ void Robot::RobotInit() {
 
     _UltraFront = new Ultrasonic(2, 3);
     _UltraFront->SetAutomaticMode(true);
+
+    UpdateLED_Output(V_RobotState,
+                     false,
+                     V_LED_State0,
+                     V_LED_State1,
+                     V_LED_State2,
+                     V_LED_State3);
 }
 
 void Robot::RobotPeriodic() {
@@ -131,49 +138,64 @@ void Robot::RobotPeriodic() {
     
     /* Let's update the LED ligts here so that it will always run, regardless of in auto mode or in driver mode. */
     UpdateLED_Output(V_RobotState,
-                     _joy1->GetRawButton(1),
+                     _joy1->GetRawButton(2),
                      V_LED_State0,
                      V_LED_State1,
                      V_LED_State2,
                      V_LED_State3);
 
-      if(IsAutonDwn){
-        if(autonStagesClimbDown[0] == false){
-          autonStagesClimbDown[0] = AutonDropBackLift(_talon6, -5500.0, -5500);
-        } else if(autonStagesClimbDown[1] == false) {
-          MaintainBackLift(_talon6, -5500);
+      if(IsAutonDwn)
+        {
+        if (autonStagesClimbDown[0] == false)
+          {
+          // With the front overhanging, drop the back lift
+          autonStagesClimbDown[0] = AutonDropBackLift(_talon6, K_LiftHeightStage2, K_LiftHeightStage2);
+          }
+        else if(autonStagesClimbDown[1] == false)
+          {
+          // Hold the back lift and then start to drive off the platform until the front ultrasonic detects the edge
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
           autonStagesClimbDown[1] = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, -50);
-        } else if(autonStagesClimbDown[2] == false) {
-          MaintainBackLift(_talon6, -5500);
+          }
+        else if(autonStagesClimbDown[2] == false)
+          {
+          // Now lets stop the drive wheels and then drop the front lift while still holding the back lift
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
           L_Test = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, 0);
-          autonStagesClimbDown[2] = AutonRaiseForwardDrop(_talon5, -5500.0, -5500);
-          //Drive Lift Wheel until B. Ultrasonic is greater than X
-        } else if(autonStagesClimbDown[3] == false) {
-          MaintainBackLift(_talon6, -5500);
-          MaintainForwardLift(_talon5, -5500);
+          autonStagesClimbDown[2] = AutonRaiseForwardDrop(_talon5, K_LiftHeightStage2, K_LiftHeightStage2);
+          }
+        else if(autonStagesClimbDown[3] == false)
+          {
+          // Great, we've got both lifts extended, lets drive backwards a bit (open loop!!)
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          MaintainForwardLift(_talon5, K_LiftHeightStage2);
           L_OpenLoopTimer += C_ExeTime;
           autonStagesClimbDown[3] = AutonDriveLiftWheelOpenLoop(_spark1, L_OpenLoopTimer);
-          //Lower Back Lift to X hight
-        } else if(autonStagesClimbDown[4] == false) {
+          }
+        else if(autonStagesClimbDown[4] == false)
+          {
+          // We've driven backwards a bit, lets pull the lifts back and drop the robot
           autonStagesClimbDown[4] = AutonDropToHight(_talon6, _talon5, 0);
-          //Raise both lifts to hight
-        } else if(autonStagesClimbDown[4] == true) {
+          }
+        else if(autonStagesClimbDown[4] == true)
+          {
+          // All done!  We are back on the ground and can resume normal driving!
           IsAutonDwn = false;
-          //Stop auton
-        }
+          }
         Wait(C_ExeTime);
-      }else if(IsAuton){
+        }
+      else if(IsAuton){
         if(autonStagesClimb[0] == false){
-          autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5, -15500);
+          autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5, K_LiftHeightStage3);
           V_RobotState = E_AutonEndGame1;
         } else if(autonStagesClimb[1] == false) {
           autonStagesClimb[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
-          MaintainBackLift(_talon6, -15500);
-          MaintainForwardLift(_talon5, -15500);
+          MaintainBackLift(_talon6, K_LiftHeightStage3);
+          MaintainForwardLift(_talon5, K_LiftHeightStage3);
           V_RobotState = E_AutonEndGame2;
         } else if(autonStagesClimb[2] == false) {
           autonStagesClimb[2] = AutonRaiseForwardLift(_talon5, 0.0);
-          MaintainBackLift(_talon6, -15500);
+          MaintainBackLift(_talon6, K_LiftHeightStage3);
           _talon1->Set(ControlMode::PercentOutput, 0.1);
           _talon2->Set(ControlMode::PercentOutput, 0.1);
           _talon3->Set(ControlMode::PercentOutput, -0.1);
@@ -181,7 +203,7 @@ void Robot::RobotPeriodic() {
           V_RobotState = E_AutonEndGame3;
         } else if(autonStagesClimb[3] == false) {
           autonStagesClimb[3] = AutonMainDrive(_talon1,_talon2,_talon3,_talon4,_UltraBack);
-          MaintainBackLift(_talon6, -15500);
+          MaintainBackLift(_talon6, K_LiftHeightStage3);
           V_RobotState = E_AutonEndGame4;
         } else if(autonStagesClimb[4] == false) {
           autonStagesClimb[4] = AutonRaiseBackLift(_talon6, 0.0, -150);
@@ -242,16 +264,16 @@ void Robot::RobotPeriodic() {
         DesiredPos_Backward -= 100;
       }
       //DesiredPos Limit
-      if (DesiredPos_Backward < -15500.0){
-        DesiredPos_Backward = -15500.0;
+      if (DesiredPos_Backward < K_LiftHeightStage3){
+        DesiredPos_Backward = K_LiftHeightStage3;
       }
       else if (DesiredPos_Backward > 0)
       {
         DesiredPos_Backward = 0;
       }
 
-      if (DesiredPos_Forward < -15500.0){
-        DesiredPos_Forward = -15500.0;
+      if (DesiredPos_Forward < K_LiftHeightStage3){
+        DesiredPos_Forward = K_LiftHeightStage3;
       }
       else if (DesiredPos_Forward > 0)
       {
@@ -487,12 +509,18 @@ void Robot::RobotPeriodic() {
         _spark3->Set(0);
       }
 
-      if(_joy1->GetRawButton(8))
+/* Let's determine if we want to run the auto up feature.  We only want to allow the auto up feature 
+   if we've reached the end game warning (don't want to accidently trigger this mode). */
+      if((_joy1->GetRawButton(8) == true) &&
+         (DriverStation::GetInstance().GetMatchTime() <= K_EndMatchWarningTime))
       {
         IsAuton = true;
       }
 
-      if(_joy1->GetRawButton(1))
+/* Let's determine if we want to run the auto down feature.  We only want to allow the auto down 
+   feature if in "sandstorm" (don't want to accidently trigger this mode). */
+      if((_joy1->GetRawButton(1) == true) &&
+         (DriverStation::GetInstance().GetMatchTime() >= K_SandStormTime))
       {
         IsAutonDwn = true;
       }

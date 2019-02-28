@@ -1,6 +1,6 @@
-
 #include "Control_Pid.h"
-#include "enums.h"
+// #include "enums.h"
+#include "Calibrations.hpp"
 
 #include <iostream>
 #include <string>
@@ -9,7 +9,8 @@
 #include <frc/Ultrasonic.h>
 #include <frc/Spark.h>
 
-#include "const.h"
+// #include "const.h"
+
 
 using namespace frc;
 
@@ -112,7 +113,7 @@ bool AutonDropToHight(TalonSRX *_talon6, TalonSRX *_talon5, double liftTarget)
     SmartDashboard::PutNumber("Lift pos back", Lift_BackPos);
     SmartDashboard::PutNumber("Lift pos forward", Lift_ForwardPos);
 
-   
+ 
     AutonPID_P[E_RobotLiftForward] = 1 - (Lift_ForwardPos - Lift_BackPos)/LiftThresh;
     AutonPID_P[E_RobotLiftBack] = 1 - (Lift_BackPos - Lift_ForwardPos)/LiftThresh;
     
