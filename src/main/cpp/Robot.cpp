@@ -293,7 +293,7 @@ void Robot::RobotPeriodic() {
       V_RobotUserCmndPct[E_RobotSideLeft] = -((_joy1->GetRawAxis(1) - (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
       V_RobotUserCmndPct[E_RobotSideRight] = -((_joy1->GetRawAxis(1) + (_joy1->GetRawAxis(4) * K_RotateGain))) * Drive_SpeedGain;
 
-      if ((_joy1->GetPOV() == 270) ||
+      if ((_joy1->GetRawButton(5)) ||
           (V_RobotShimmyLeftInProcess == true))
         {
         /* Shimmy to the left: */
@@ -360,7 +360,7 @@ void Robot::RobotPeriodic() {
             }
           }
         }
-      else if ((_joy1->GetPOV() == 90) ||
+      else if ((_joy1->GetRawButton(6)) ||
                (V_RobotShimmyRightInProcess == true))
         {
         /* Shimmy to the right: */
@@ -499,10 +499,10 @@ void Robot::RobotPeriodic() {
       _talon4->Set(ControlMode::PercentOutput, Drive_Right);
 
 
-       if(_joy2->GetRawAxis(0)  > 0.05){
-        _spark1->Set(_joy2->GetRawAxis(0));
-      } else if(_joy2->GetRawAxis(0)  < -0.05){
-        _spark1->Set(_joy2->GetRawAxis(0) * -1);
+       if(_joy2->GetRawAxis(1)  > 0.05){
+        _spark1->Set(_joy2->GetRawAxis(1) * -1);
+      } else if(_joy2->GetRawAxis(1)  < -0.05){
+        _spark1->Set(_joy2->GetRawAxis(1) * -1);
       } else {
         _spark1->Set(0);
       }
