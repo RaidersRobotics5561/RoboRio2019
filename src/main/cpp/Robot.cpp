@@ -17,6 +17,10 @@ T_RobotShimmyRight V_RobotShimmyRight;
 
 T_RoboState V_RobotState;
 
+bool autonStagesClimbDown[9] = {false,false,false,false,false,false,false,false,false};
+bool L_Test = false;
+double L_OpenLoopTimer = 0;
+
 void UpdateLED_Output(T_RoboState    L_RobotState,
                       bool           L_DriverOverride,
                       DigitalOutput *L_LED_State0,
@@ -125,15 +129,12 @@ void Robot::RobotPeriodic() {
     bool   V_RobotShimmyLeftInProcess  = false;
     bool   V_RobotShimmyRightInProcess = false;
     bool   V_RobotShimmyStop           = false;
-    bool   L_Test = false;
-    double L_OpenLoopTimer = 0;
 
     int AutonStep = 0;
     bool test = true;
     IsAuton = false;
     IsAutonDwn = false;
     bool autonStagesClimb[9] = {false,false,false,false,false,false,false,false,false};
-    bool autonStagesClimbDown[9] = {false,false,false,false,false,false,false,false,false};
     while(IsEnabled() && IsOperatorControl()){
     
     /* Let's update the LED ligts here so that it will always run, regardless of in auto mode or in driver mode. */
@@ -144,47 +145,7 @@ void Robot::RobotPeriodic() {
                      V_LED_State2,
                      V_LED_State3);
 
-      if(IsAutonDwn)
-        {
-        if (autonStagesClimbDown[0] == false)
-          {
-          // With the front overhanging, drop the back lift
-          autonStagesClimbDown[0] = AutonDropBackLift(_talon6, K_LiftHeightStage2, K_LiftHeightStage2);
-          }
-        else if(autonStagesClimbDown[1] == false)
-          {
-          // Hold the back lift and then start to drive off the platform until the front ultrasonic detects the edge
-          MaintainBackLift(_talon6, K_LiftHeightStage2);
-          autonStagesClimbDown[1] = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, -50);
-          }
-        else if(autonStagesClimbDown[2] == false)
-          {
-          // Now lets stop the drive wheels and then drop the front lift while still holding the back lift
-          MaintainBackLift(_talon6, K_LiftHeightStage2);
-          L_Test = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, 0);
-          autonStagesClimbDown[2] = AutonRaiseForwardDrop(_talon5, K_LiftHeightStage2, K_LiftHeightStage2);
-          }
-        else if(autonStagesClimbDown[3] == false)
-          {
-          // Great, we've got both lifts extended, lets drive backwards a bit (open loop!!)
-          MaintainBackLift(_talon6, K_LiftHeightStage2);
-          MaintainForwardLift(_talon5, K_LiftHeightStage2);
-          L_OpenLoopTimer += C_ExeTime;
-          autonStagesClimbDown[3] = AutonDriveLiftWheelOpenLoop(_spark1, L_OpenLoopTimer);
-          }
-        else if(autonStagesClimbDown[4] == false)
-          {
-          // We've driven backwards a bit, lets pull the lifts back and drop the robot
-          autonStagesClimbDown[4] = AutonDropToHight(_talon6, _talon5, 0);
-          }
-        else if(autonStagesClimbDown[4] == true)
-          {
-          // All done!  We are back on the ground and can resume normal driving!
-          IsAutonDwn = false;
-          }
-        Wait(C_ExeTime);
-        }
-      else if(IsAuton){
+     if(IsAuton){
         if(autonStagesClimb[0] == false){
           autonStagesClimb[0] = AutonLiftToHight(_talon6, _talon5, K_LiftHeightStage3);
           V_RobotState = E_AutonEndGame1;
@@ -551,7 +512,50 @@ void Robot::RobotPeriodic() {
 }
 
 void Robot::AutonomousInit() {}
-void Robot::AutonomousPeriodic() {}
+void Robot::AutonomousPeriodic() {
+  IsAutonDwn = _joy1->GetRawButton(1);
+  
+  if(IsAutonDwn)
+        {
+        if (autonStagesClimbDown[0] == false)
+          {
+          // With the front overhanging, drop the back lift
+          autonStagesClimbDown[0] = AutonDropBackLift(_talon6, K_LiftHeightStage2, K_LiftHeightStage2);
+          }
+        else if(autonStagesClimbDown[1] == false)
+          {
+          // Hold the back lift and then start to drive off the platform until the front ultrasonic detects the edge
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          autonStagesClimbDown[1] = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, -50);
+          }
+        else if(autonStagesClimbDown[2] == false)
+          {
+          // Now lets stop the drive wheels and then drop the front lift while still holding the back lift
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          L_Test = AutonMainDriveRev(_talon1,_talon2,_talon3,_talon4,_UltraFront, 0);
+          autonStagesClimbDown[2] = AutonRaiseForwardDrop(_talon5, K_LiftHeightStage2, K_LiftHeightStage2);
+          }
+        else if(autonStagesClimbDown[3] == false)
+          {
+          // Great, we've got both lifts extended, lets drive backwards a bit (open loop!!)
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          MaintainForwardLift(_talon5, K_LiftHeightStage2);
+          L_OpenLoopTimer += C_ExeTime;
+          autonStagesClimbDown[3] = AutonDriveLiftWheelOpenLoop(_spark1, L_OpenLoopTimer);
+          }
+        else if(autonStagesClimbDown[4] == false)
+          {
+          // We've driven backwards a bit, lets pull the lifts back and drop the robot
+          autonStagesClimbDown[4] = AutonDropToHight(_talon6, _talon5, 0);
+          }
+        else if(autonStagesClimbDown[4] == true)
+          {
+          // All done!  We are back on the ground and can resume normal driving!
+          IsAutonDwn = false;
+          }
+        }
+  Wait(C_ExeTime);
+}
 void Robot::TeleopInit() {}
 void Robot::TeleopPeriodic() {}
 void Robot::TestPeriodic() {}
