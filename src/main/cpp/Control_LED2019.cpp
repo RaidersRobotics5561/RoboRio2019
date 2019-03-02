@@ -11,7 +11,8 @@
 
 #include "Calibrations.hpp"
 
-
+double V_OpenLoopTimer;
+LED_Mode V_LED_Mode;
 
 
 /******************************************************************************
@@ -21,17 +22,17 @@
  *               The 16 modes are as follows:
  *
  *                * Chan0 * Chan1 * Chan2 * Chan3 *
- *                    0       0       0       0      * Mode0 * - Default no comm
+ *                    0       0       0       0      * Mode0 * - Default no comm *
  *                    0       0       0       1      * Mode1 * - Com, but disabled
  *                    0       1       0       0      * Mode2 * - Com, Rio and Pi
- *                    0       1       1       1      * Mode3 * - Sandstorm, Red Alliance
- *                    1       0       0       0      * Mode4 * - Sandstorm, Blue Alliance
+ *                    0       1       1       1      * Mode3 * - Sandstorm, Red Alliance*
+ *                    1       0       0       0      * Mode4 * - Sandstorm, Blue Alliance*
  *                    1       0       1       1      * Mode5 * - Teleop, Red 
  *                    1       1       0       0      * Mode6 * - Teleop, Blue
- *                    1       1       1       1      * Mode7 * - User Override, Green
- *                    1       0       0       0      * Mode8 * - Raise on Stilts
+ *                    1       1       1       1      * Mode7 * - User Override, Green*
+ *                    1       0       0       0      * Mode8 * - Raise on Stilts*
  *                    1       0       0       1      * Mode9 * - On Stilts
- *                    1       0       1       0      * Mode10* - Both Stilts Up, Endgame
+ *                    1       0       1       0      * Mode10* - Both Stilts Up, Endgame*
  *                    1       0       1       1      * Mode11* - Empty
  *                    1       1       0       0      * Mode12* - Empty
  *                    1       1       0       1      * Mode13* - Empty
@@ -53,21 +54,57 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
   double L_MatchTime     = DriverStation::GetInstance().GetMatchTime();
   DriverStation::Alliance L_AllianceColor = DriverStation::GetInstance().GetAlliance();
 
-  if (L_MatchTime < K_EndMatchWarningTime &&
+//   V_OpenLoopTimer += C_ExeTime;
+
+//   if (V_OpenLoopTimer >= 3.0)
+//   {
+//     V_LED_Mode = LED_Mode(int(V_LED_Mode) + 1);
+//     V_OpenLoopTimer = 0;
+//   }
+
+// if (V_LED_Mode >= LED_ModeSz)
+// {
+//   V_LED_Mode = LED_Mode0;
+// }
+
+
+// L_LED_Mode = V_LED_Mode;
+
+//       SmartDashboard::PutNumber("LED Mode: ", double(L_LED_Mode));
+
+
+  // if (L_DriverOverride == true)
+  //   {
+  //   /* Allow the driver to always override the current LED mode. */
+  //     L_LED_Mode = LED_Mode7;
+  //   }
+
+  if (L_RobotState == E_Init)
+  {
+    L_LED_Mode = LED_Mode8;
+  }
+  else if (L_MatchTime < K_EndMatchWarningTime &&
       L_RobotState == E_Teleop)
     {
-      L_LED_Mode = LED_Mode2;
+      L_LED_Mode = LED_Mode14;
     }
-
-  if (L_DriverOverride == true)
-    {
-    /* Allow the driver to always override the current LED mode. */
-      L_LED_Mode = LED_Mode7;
-    }
-  else if ((L_RobotState == E_Teleop) &&
+  else if (((L_RobotState == E_Teleop) ||
+             (L_RobotState == E_AutonSandStorm1)) &&
+             (L_RobotState < E_AutonEndGame1) &&
            (L_AllianceColor != DriverStation::Alliance::kInvalid))
     {
       if (L_AllianceColor == DriverStation::Alliance::kBlue)
+        {
+          if (L_MatchTime > K_SandStormTime)
+            {
+              L_LED_Mode = LED_Mode2;
+            }
+          else
+            {
+              L_LED_Mode = LED_Mode2;
+            }
+        }
+      else if (L_AllianceColor == DriverStation::Alliance::kRed)
         {
           if (L_MatchTime > K_SandStormTime)
             {
@@ -75,18 +112,7 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
             }
           else
             {
-              L_LED_Mode = LED_Mode6;
-            }
-        }
-      else if (L_AllianceColor == DriverStation::Alliance::kRed)
-        {
-          if (L_MatchTime > K_SandStormTime)
-            {
-              L_LED_Mode = LED_Mode3;
-            }
-          else
-            {
-              L_LED_Mode = LED_Mode5;
+              L_LED_Mode = LED_Mode4;
             }
         }
     }
@@ -98,12 +124,15 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
            (L_RobotState == E_AutonEndGame3) ||
            (L_RobotState == E_AutonEndGame4))
     {
-      L_LED_Mode = LED_Mode9;
+      L_LED_Mode = LED_Mode8;
     }
   else if (L_RobotState == E_AutonEndGame5)
     {
-      L_LED_Mode = LED_Mode10;
+      L_LED_Mode = LED_Mode12;
     }
+
+
+// SmartDashboard::PutNumber("Match Time: ", L_MatchTime);
 
   switch (L_LED_Mode)
     {
@@ -173,6 +202,10 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
         break;
     }
 
+      // SmartDashboard::PutBoolean("Pin 0: ", L_Pin0);
+      // SmartDashboard::PutBoolean("Pin 1: ", L_Pin1);
+      // SmartDashboard::PutBoolean("Pin 2: ", L_Pin2);
+      // SmartDashboard::PutBoolean("Pin 3: ", L_Pin3);
 
   // Output to the DIO pins:
   L_LED_State0->Set(L_Pin0);

@@ -197,11 +197,11 @@ bool AutonDriveLiftWheel(Spark *_spark1, Ultrasonic *_Ultrasonic)
 
 bool AutonDriveLiftWheelOpenLoop(Spark *_spark1, double L_Time)
 {
-    if(L_Time < 0.75){
-       _spark1->Set(-1.0);
+    if(L_Time < 0.3){
+       _spark1->Set(-0.8);
        return false;
     } else {
-        _spark1->Set(0.0);
+        _spark1->Set(0);
         return true;
     }
 }
