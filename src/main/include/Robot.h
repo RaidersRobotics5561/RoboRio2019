@@ -27,7 +27,8 @@ class Robot : public frc::IterativeRobot {
  private:
   double Lift_Pos[E_RobotLiftSz];
  
-  bool IsAuton = false;
+  bool IsAuton    = false;
+  bool IsAuton2   = false;
   bool IsAutonDwn = false;
 
   double DesiredPos_Backward = 0; 

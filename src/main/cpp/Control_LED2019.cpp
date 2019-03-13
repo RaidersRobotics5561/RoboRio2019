@@ -81,7 +81,7 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
 
   if (L_RobotState == E_Init)
   {
-    L_LED_Mode = LED_Mode8;
+    L_LED_Mode = LED_Mode0;
   }
   else if (L_MatchTime < K_EndMatchWarningTime &&
       L_RobotState == E_Teleop)
@@ -90,18 +90,17 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
     }
   else if (((L_RobotState == E_Teleop) ||
              (L_RobotState == E_AutonSandStorm1)) &&
-             (L_RobotState < E_AutonEndGame1) &&
            (L_AllianceColor != DriverStation::Alliance::kInvalid))
     {
       if (L_AllianceColor == DriverStation::Alliance::kBlue)
         {
           if (L_MatchTime > K_SandStormTime)
             {
-              L_LED_Mode = LED_Mode2;
+              L_LED_Mode = LED_Mode7;
             }
           else
             {
-              L_LED_Mode = LED_Mode2;
+              L_LED_Mode = LED_Mode7;
             }
         }
       else if (L_AllianceColor == DriverStation::Alliance::kRed)
@@ -112,7 +111,7 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
             }
           else
             {
-              L_LED_Mode = LED_Mode4;
+              L_LED_Mode = LED_Mode5;
             }
         }
     }
@@ -124,13 +123,14 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
            (L_RobotState == E_AutonEndGame3) ||
            (L_RobotState == E_AutonEndGame4))
     {
-      L_LED_Mode = LED_Mode8;
+      L_LED_Mode = LED_Mode9;
     }
   else if (L_RobotState == E_AutonEndGame5)
     {
       L_LED_Mode = LED_Mode12;
     }
 
+// L_LED_Mode = LED_Mode7;
 
 // SmartDashboard::PutNumber("Match Time: ", L_MatchTime);
 

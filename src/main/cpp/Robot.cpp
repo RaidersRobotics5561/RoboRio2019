@@ -7,7 +7,7 @@
 
 #include "Control_Pid.h"
 #include "Calibrations.hpp"
-#include "CameraServer.h"
+// #include "CameraServer.h"
 
 
 using namespace frc;
@@ -31,11 +31,11 @@ void UpdateLED_Output(T_RoboState    L_RobotState,
 
 void Robot::RobotInit() {
 
-  CameraServer::GetInstance()->StartAutomaticCapture(0);
-  CameraServer::GetInstance()->StartAutomaticCapture(1);
+  // CameraServer::GetInstance()->StartAutomaticCapture(0);
+  // CameraServer::GetInstance()->StartAutomaticCapture(1);
 
   V_RobotState = E_Init;
-  V_SwingScale = 0.75;
+  V_SwingScale = 0.962831;
   V_RobotShimmyLeft  = E_RobotShimmyLeft_ShimmySz;
   V_RobotShimmyRight = E_RobotShimmyRight_LeftBackwards;
 
@@ -143,8 +143,10 @@ void Robot::RobotPeriodic() {
     int AutonStep = 0;
     bool test = true;
     IsAuton = false;
+    IsAuton2 = false;
     IsAutonDwn = false;
     bool autonStagesClimb[9] = {false,false,false,false,false,false,false,false,false};
+    bool autonStagesClimb2[9] = {false,false,false,false,false,false,false,false,false};
     V_RobotState = E_Teleop;
     while(IsEnabled() && IsOperatorControl()){
     
@@ -155,6 +157,8 @@ void Robot::RobotPeriodic() {
                      V_LED_State1,
                      V_LED_State2,
                      V_LED_State3);
+    SmartDashboard::PutBoolean("Auton Down", IsAutonDwn);
+    SmartDashboard::PutNumber("Match Time", DriverStation::GetInstance().GetMatchTime());
 
      if(IsAutonDwn)
         {
@@ -217,37 +221,61 @@ void Robot::RobotPeriodic() {
           MaintainBackLift(_talon6, K_LiftHeightStage3);
           V_RobotState = E_AutonEndGame4;
         } else if(autonStagesClimb[4] == false) {
+          _talon1->Set(ControlMode::PercentOutput, 0.08);
+          _talon2->Set(ControlMode::PercentOutput, 0.08);
+          _talon3->Set(ControlMode::PercentOutput, -0.08);
+          _talon4->Set(ControlMode::PercentOutput, -0.08);
           autonStagesClimb[4] = AutonRaiseBackLift(_talon6, 0.0, -150);
           V_RobotState = E_AutonEndGame5;
         }  else if(autonStagesClimb[4] == true) {
           IsAuton = false;
           V_RobotState = E_AutonEndGame5;
         }
-        SmartDashboard::PutBoolean("Step 0", autonStagesClimb[0]);
-        SmartDashboard::PutBoolean("Step 1", autonStagesClimb[1]);
-        SmartDashboard::PutBoolean("Step 2", autonStagesClimb[2]);
-        SmartDashboard::PutBoolean("Step 3", autonStagesClimb[3]);
-        SmartDashboard::PutBoolean("Step 4", autonStagesClimb[4]);
         Wait(C_ExeTime);
-      } else {
+      } 
+      else if(IsAuton2){
+        if(autonStagesClimb2[0] == false){
+          autonStagesClimb2[0] = AutonLiftToHight(_talon6, _talon5, K_LiftHeightStage2);
+          V_RobotState = E_AutonEndGame1;
+        } else if(autonStagesClimb2[1] == false) {
+          autonStagesClimb2[1] = AutonDriveLiftWheel(_spark1, _UltraFront);
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          MaintainForwardLift(_talon5, K_LiftHeightStage2);
+          V_RobotState = E_AutonEndGame2;
+        } else if(autonStagesClimb2[2] == false) {
+          autonStagesClimb2[2] = AutonRaiseForwardLift(_talon5, 0.0);
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          _talon1->Set(ControlMode::PercentOutput, 0.1);
+          _talon2->Set(ControlMode::PercentOutput, 0.1);
+          _talon3->Set(ControlMode::PercentOutput, -0.1);
+          _talon4->Set(ControlMode::PercentOutput, -0.1);
+          V_RobotState = E_AutonEndGame3;
+        } else if(autonStagesClimb2[3] == false) {
+          autonStagesClimb2[3] = AutonMainDrive(_talon1,_talon2,_talon3,_talon4,_UltraBack);
+          MaintainBackLift(_talon6, K_LiftHeightStage2);
+          V_RobotState = E_AutonEndGame4;
+        } else if(autonStagesClimb2[4] == false) {
+          _talon1->Set(ControlMode::PercentOutput, 0.08);
+          _talon2->Set(ControlMode::PercentOutput, 0.08);
+          _talon3->Set(ControlMode::PercentOutput, -0.08);
+          _talon4->Set(ControlMode::PercentOutput, -0.08);
+          autonStagesClimb2[4] = AutonRaiseBackLift(_talon6, 0.0, -150);
+          V_RobotState = E_AutonEndGame5;
+        }  else if(autonStagesClimb2[4] == true) {
+          IsAuton2 = false;
+          V_RobotState = E_AutonEndGame5;
+        }
+      Wait(C_ExeTime);
+      }
+      else {
       
 
       //Back Lift Pos
       Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * K_RobotType; //FLIP ME TOO
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
       
-      SmartDashboard::PutNumber("LiftPos Back:", Lift_Pos[E_RobotLiftBack]);
-      SmartDashboard::PutNumber("LiftPos Forward:", Lift_Pos[E_RobotLiftForward]);
-      
       Drive_RPMRaw[E_RobotSideLeft] = (_talon2->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev;
       Drive_RPMRaw[E_RobotSideRight] = ((_talon4->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev) * -1;
-
-      SmartDashboard::PutNumber("Drive RPM Left:", Drive_RPMRaw[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Drive RPM Right:", Drive_RPMRaw[E_RobotSideRight]);
-
-      SmartDashboard::PutNumber("Ultra Front:", _UltraFront->GetRangeInches());
-      SmartDashboard::PutNumber("Ultra Back:", _UltraBack->GetRangeInches());
-
       //y
       if(_joy2->GetRawButton(4)){
         DesiredPos_Backward -= 100;
@@ -290,9 +318,6 @@ void Robot::RobotPeriodic() {
       {
         DesiredPos_Forward = 0;
       }
-
-      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
 
       if(_joy1->GetRawAxis(3) < Drive_SpeedGain_Min)
       {
@@ -486,17 +511,6 @@ void Robot::RobotPeriodic() {
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
                             1, -1); //Out Upper and lower
-
-
-      SmartDashboard::PutNumber("Shimmy Distance:", V_RobotShimmyDistance);
-      SmartDashboard::PutNumber("Drive left:", Drive_Left);
-      SmartDashboard::PutNumber("Drive right:", Drive_Right);
-      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
-      SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
-
-      SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
 
       //Set Lift Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
@@ -542,6 +556,12 @@ void Robot::RobotPeriodic() {
         IsAuton = true;
       }
 
+      if((_joy2->GetRawButton(8) == true) &&
+         (DriverStation::GetInstance().GetMatchTime() <= K_EndMatchWarningTime))
+      {
+        IsAuton2 = true;
+      }
+
 /* Let's determine if we want to run the auto down feature.  We only want to allow the auto down 
    feature if in "sandstorm" (don't want to accidently trigger this mode). */
 
@@ -555,7 +575,6 @@ void Robot::RobotPeriodic() {
       }
     }
 }
-
 void Robot::AutonomousInit() {}
 void Robot::AutonomousPeriodic() {
   _talon6->SetSelectedSensorPosition(0, 0, K_TimeoutMs);
@@ -596,8 +615,9 @@ void Robot::AutonomousPeriodic() {
     IsAuton = false;
     IsAutonDwn = false;
     bool autonStagesClimb[9] = {false,false,false,false,false,false,false,false,false};
-    while(IsEnabled() && IsAutonomous()){
     V_RobotState = E_AutonSandStorm1;
+    while(IsEnabled() && IsAutonomous()){
+    
 
     /* Let's update the LED ligts here so that it will always run, regardless of in auto mode or in driver mode. */
     UpdateLED_Output(V_RobotState,
@@ -606,6 +626,10 @@ void Robot::AutonomousPeriodic() {
                      V_LED_State1,
                      V_LED_State2,
                      V_LED_State3);
+    
+    SmartDashboard::PutBoolean("Auton Down", IsAutonDwn);
+    SmartDashboard::PutNumber("Match Time", DriverStation::GetInstance().GetMatchTime());
+
 
      if(IsAutonDwn)
         {
@@ -645,7 +669,7 @@ void Robot::AutonomousPeriodic() {
           // All done!  We are back on the ground and can resume normal driving!
           IsAutonDwn = false;
           } 
-          SmartDashboard::PutBoolean("Auton Down", IsAutonDwn);
+
           Wait(C_ExeTime);
         } else if(IsAuton){
         if(autonStagesClimb[0] == false){
@@ -675,11 +699,6 @@ void Robot::AutonomousPeriodic() {
           IsAuton = false;
           V_RobotState = E_Teleop;
         }
-        SmartDashboard::PutBoolean("Step 0", autonStagesClimb[0]);
-        SmartDashboard::PutBoolean("Step 1", autonStagesClimb[1]);
-        SmartDashboard::PutBoolean("Step 2", autonStagesClimb[2]);
-        SmartDashboard::PutBoolean("Step 3", autonStagesClimb[3]);
-        SmartDashboard::PutBoolean("Step 4", autonStagesClimb[4]);
         Wait(C_ExeTime);
       } else {
       V_RobotState = E_Teleop;
@@ -688,17 +707,8 @@ void Robot::AutonomousPeriodic() {
       Lift_Pos[E_RobotLiftBack] = _talon6->GetSelectedSensorPosition() * K_RobotType; //FLIP ME TOO
       Lift_Pos[E_RobotLiftForward] = _talon5->GetSelectedSensorPosition() * -1;
       
-      SmartDashboard::PutNumber("LiftPos Back:", Lift_Pos[E_RobotLiftBack]);
-      SmartDashboard::PutNumber("LiftPos Forward:", Lift_Pos[E_RobotLiftForward]);
-      
       Drive_RPMRaw[E_RobotSideLeft] = (_talon2->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev;
       Drive_RPMRaw[E_RobotSideRight] = ((_talon4->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev) * -1;
-
-      SmartDashboard::PutNumber("Drive RPM Left:", Drive_RPMRaw[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Drive RPM Right:", Drive_RPMRaw[E_RobotSideRight]);
-
-      SmartDashboard::PutNumber("Ultra Front:", _UltraFront->GetRangeInches());
-      SmartDashboard::PutNumber("Ultra Back:", _UltraBack->GetRangeInches());
 
       //y
       if(_joy2->GetRawButton(4)){
@@ -742,9 +752,6 @@ void Robot::AutonomousPeriodic() {
       {
         DesiredPos_Forward = 0;
       }
-
-      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
 
       if(_joy1->GetRawAxis(3) < Drive_SpeedGain_Min)
       {
@@ -940,18 +947,6 @@ void Robot::AutonomousPeriodic() {
                             1, -1); //Out Upper and lower
 
 
-      SmartDashboard::PutNumber("Shimmy Distance:", V_RobotShimmyDistance);
-      SmartDashboard::PutNumber("Drive left:", Drive_Left);
-      SmartDashboard::PutNumber("Drive right:", Drive_Right);
-      SmartDashboard::PutNumber("Usr Cmd Left:", V_RobotUserCmndPct[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Usr Cmd Right:", V_RobotUserCmndPct[E_RobotSideRight]);
-      SmartDashboard::PutNumber("Drive Desired Left:", Drive_Desired[E_RobotSideLeft]);
-      SmartDashboard::PutNumber("Drive Desored Right:", Drive_Desired[E_RobotSideRight]);
-
-      SmartDashboard::PutBoolean("Test1", true);
-
-      SmartDashboard::PutNumber("POV:", _joy1->GetPOV());
-
       //Set Lift Motor Output
       _talon5->Set(ControlMode::PercentOutput, LiftOut_Forward * -1);
       _talon6->Set(ControlMode::PercentOutput, LiftOut_Backward * K_RobotType);
@@ -990,8 +985,6 @@ void Robot::AutonomousPeriodic() {
 
 /* Let's determine if we want to run the auto up feature.  We only want to allow the auto up feature 
    if we've reached the end game warning (don't want to accidently trigger this mode). */
-
-  SmartDashboard::PutNumber("Match Time", DriverStation::GetInstance().GetMatchTime());
 
 /* Let's determine if we want to run the auto down feature.  We only want to allow the auto down 
    feature if in "sandstorm" (don't want to accidently trigger this mode). */
