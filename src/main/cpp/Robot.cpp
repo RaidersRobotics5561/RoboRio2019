@@ -276,6 +276,9 @@ void Robot::RobotPeriodic() {
       
       Drive_RPMRaw[E_RobotSideLeft] = (_talon2->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev;
       Drive_RPMRaw[E_RobotSideRight] = ((_talon4->GetSelectedSensorVelocity(0) * 600) / K_WheelPulseToRev) * -1;
+
+      SmartDashboard::PutNumber("RPM Raw Left", Drive_RPMRaw[E_RobotSideLeft]);
+      SmartDashboard::PutNumber("RPM Raw Right", Drive_RPMRaw[E_RobotSideRight]);
       //y
       if(_joy2->GetRawButton(4)){
         DesiredPos_Backward -= 100;
@@ -496,7 +499,7 @@ void Robot::RobotPeriodic() {
                             Drive_RPMRaw[E_RobotSideLeft],
                             &Drive_ErrPrev[E_RobotSideLeft],
                             &Drive_IntPrev[E_RobotSideLeft],
-                            0.002, 0.0002, 0.00002, //P I D
+                            0.0025, 0.00025, 0.00000, //P I D
                             0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
@@ -506,7 +509,7 @@ void Robot::RobotPeriodic() {
                             Drive_RPMRaw[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
-                            0.002, 0.0002, 0.00002, //P I D
+                            0.0025, 0.00025, 0, //P I D
                             0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
@@ -930,7 +933,7 @@ void Robot::AutonomousPeriodic() {
                             Drive_RPMRaw[E_RobotSideLeft],
                             &Drive_ErrPrev[E_RobotSideLeft],
                             &Drive_IntPrev[E_RobotSideLeft],
-                            0.002, 0.0002, 0.00002, //P I D
+                            0.0025, 0.00025, 0, //P I D
                             0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
@@ -940,7 +943,7 @@ void Robot::AutonomousPeriodic() {
                             Drive_RPMRaw[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
                             &Drive_ErrPrev[E_RobotSideRight],
-                            0.002, 0.0002, 0.00002, //P I D
+                            0.0025, 0.00025, 0, //P I D
                             0.8, -0.8,    //P Upper and lower
                             1.0, -1,    //I Upper and lower
                             1,-1,          //D Upper and lower
